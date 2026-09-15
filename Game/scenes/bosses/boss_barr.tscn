@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://cf4jwm2nsfmvx"]
+
+[ext_resource type="Script" path="res://scripts/boss_barr.gd" id="1_v514x"]
+[ext_resource type="Texture2D" uid="uid://bo0csjr18wuu1" path="res://assets/sprites/ui/boss-1-health_bar.png" id="2_goxnn"]
+[ext_resource type="Texture2D" uid="uid://dlqrj5ybdu6x" path="res://assets/sprites/ui/boss-1-health_bar_progress.png" id="3_cnbdg"]
+
+[node name="TextureProgressBar" type="TextureProgressBar"]
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -20.0
+offset_top = -40.0
+offset_right = 20.0
+grow_horizontal = 2
+grow_vertical = 0
+texture_under = ExtResource("2_goxnn")
+texture_progress = ExtResource("3_cnbdg")
+script = ExtResource("1_v514x")

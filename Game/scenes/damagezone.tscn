@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://c1dj74ph6tnta"]
+
+[ext_resource type="Script" path="res://scripts/damagezone.gd" id="1_bvj22"]
+
+[node name="Area2D" type="Area2D"]
+script = ExtResource("1_bvj22")
+
+[connection signal="body_entered" from="." to="." method="_on_body_entered"]
