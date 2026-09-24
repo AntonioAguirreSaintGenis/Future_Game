@@ -757,5 +757,8 @@ debug_color = Color(0, 0, 1, 0.419608)
 
 [node name="Timer" type="Timer" parent="."]
 
+[node name="TimerMagic" type="Timer" parent="."]
+
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
 [connection signal="timeout" from="Timer2" to="." method="_on_timer_2_timeout"]
+[connection signal="timeout" from="TimerMagic" to="." method="_on_timer_magic_timeout"]

@@ -21,12 +21,13 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var collision = $CollisionShape2D
 @onready var timer = $Timer
 @onready var timer2 = $Timer2
+@onready var timer3 = $TimerMagic
 @onready var magic = get_parent().get_node("Spell_handler")
 #@onready var blood = $CPUParticles2D
 
 var direction = 1
 var health = 3
-var mana = 1
+var mana = 2
 var rage = 6
 var state = "idle"
 var spell = "fire"
@@ -39,6 +40,7 @@ var col
 var jumping
 var timer_wall_and_jump = 0.0
 var can_be_hit = true
+var magic_timer = 0
 
 func _ready():
 	hurtbox.monitorable = true
@@ -116,6 +118,16 @@ func _physics_process(delta):
 	elif not is_on_floor() and state != "dash" and state != "flying" and state != "magic":
 		velocity.y += get_gravity() * delta
 	
+	#handle wich spell to use
+	if state == "magic_charge":
+		if Input.is_action_just_released("magic"):
+			timer3.stop()
+			state = "magic"
+			if magic_timer >= 1.5:
+				doBigMagic()
+			else:
+				doNormalMagic()
+	
 	if priority > 0:
 		if Input.is_action_just_pressed("attack"):
 			state = "attack"
@@ -127,10 +139,12 @@ func _physics_process(delta):
 				priority = 0
 				dash()
 		elif Input.is_action_just_pressed("magic"):
-			if mana == 2 or rage >= 3: 
-				state = "magic"
+			if mana == 2: 
+				timer3.start(0.5)
+				magic_timer = 0
+				state = "magic_charge"
 				priority = 0
-				doMagic()
+				animated_sprite.play("charge jump") #placeholder
 		elif Input.is_action_just_pressed("potion") and is_on_floor():
 			state = "potion"
 			priority = 0
@@ -247,8 +261,9 @@ func potion():
 		rage = 0
 		animated_sprite.play("potion")
 		health += 1
-		mana += 1
-func doMagic():
+		if mana < 2:
+			mana += 1
+func doBigMagic():
 	if magic.spell_cast == false:
 		if mana == 2:
 			mana = 0
@@ -256,9 +271,10 @@ func doMagic():
 			timer.start(0.4)
 			await timer.timeout
 			magic.cast_spell(2)
-		elif rage >= 3:
-			rage -= 2
-			mana += 1
+func doNormalMagic():
+	if magic.spell_cast == false:
+		if mana == 2:
+			mana = 0
 			animated_sprite.play("magic")
 			timer.start(0.4)
 			await timer.timeout
@@ -300,3 +316,6 @@ func take_damage(damage):
 
 func _on_timer_2_timeout():
 	can_be_hit = true
+
+func _on_timer_magic_timeout():
+	magic_timer += 0.5
