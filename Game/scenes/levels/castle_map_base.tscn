@@ -356,5 +356,5 @@ collision_layer = 15
 collision_mask = 15
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
-position = Vector2(-618, 1)
+position = Vector2(-618, 0)
 shape = SubResource("RectangleShape2D_ajtcf")

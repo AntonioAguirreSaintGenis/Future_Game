@@ -24,11 +24,10 @@ var state_attack
 var x
 var y
 var can_be_hit = true
+var agro = false
 
 func _ready():
 	base_position = position
-	timer3.wait_time = 5
-	timer3.start()
 
 func _physics_process(delta):
 	if state == States.IDLE:
@@ -112,3 +111,11 @@ func take_damage(damage):
 
 func _on_timer_2_timeout():
 	can_be_hit = true
+
+
+func _on_detection_body_entered(body):
+	if body == target and agro == false:
+		agro = true
+		timer3.wait_time = 0.5
+		timer3.start()
+		timer3.wait_time = 4

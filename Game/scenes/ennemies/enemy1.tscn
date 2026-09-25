@@ -1,4 +1,4 @@
-[gd_scene load_steps=42 format=3 uid="uid://dcr6qarm4ov62"]
+[gd_scene load_steps=43 format=3 uid="uid://dcr6qarm4ov62"]
 
 [ext_resource type="Texture2D" uid="uid://cv5h2pingo0ua" path="res://assets/sprites/enemies/enemigo-1_sprite_sheet.png" id="1_6juj8"]
 [ext_resource type="Script" path="res://scripts/enemy.gd" id="1_c1npq"]
@@ -273,6 +273,9 @@ size = Vector2(17, 13)
 [sub_resource type="SegmentShape2D" id="SegmentShape2D_7joou"]
 b = Vector2(-17, 0)
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_6nke1"]
+radius = 94.0213
+
 [node name="Enemy1" type="CharacterBody2D"]
 collision_mask = 4
 script = ExtResource("1_c1npq")
@@ -320,4 +323,10 @@ debug_color = Color(0, 0, 1, 0.419608)
 
 [node name="Timer2" type="Timer" parent="."]
 
+[node name="Detection" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Detection"]
+shape = SubResource("CircleShape2D_6nke1")
+
 [connection signal="timeout" from="Timer2" to="." method="_on_timer_2_timeout"]
+[connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]

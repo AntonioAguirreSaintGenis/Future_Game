@@ -4,7 +4,7 @@ enum States { IDLE, WALK, ATTACK1, ATTACK2, CHOOSE_ATTACK }
 
 @onready var animated_sprite = $AnimatedSprite2D
 @onready var target: CharacterBody2D = get_parent().get_node("Player") 
-@onready var raycast = $RayCast2D
+@onready var detection = $Detection
 @onready var hitbox1 = $Hitbox1
 @onready var hitbox2 = $Hitbox2
 @onready var hurtbox = $Hurtbox_enemy1
@@ -20,19 +20,14 @@ var speed = 50
 var timer_start
 var direction
 var can_be_hit = true
+var agro = false
 
 func _ready():
 	rng.randomize()
 	random_int = rng.randi_range(1, 3)
-	raycast.enabled = true
 	
 func _physics_process(delta):
 	direction = target.position.x - position.x
-	if raycast.is_colliding():
-		if raycast.get_collider() == target:
-			state = States.WALK
-			raycast.enabled = false
-	
 	if state == States.WALK:
 		if abs(direction) > 20:
 			velocity.x = sign(direction) * speed
@@ -99,3 +94,9 @@ func take_damage(damage):
 
 func _on_timer_2_timeout():
 	can_be_hit = true
+
+
+func _on_detection_body_entered(body):
+	if body == target and agro == false:
+		state = States.WALK
+		agro = true # Replace with function body.

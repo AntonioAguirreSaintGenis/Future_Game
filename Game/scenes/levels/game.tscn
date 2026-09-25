@@ -221,6 +221,8 @@ zoom = Vector2(3, 3)
 limit_smoothed = true
 position_smoothing_enabled = true
 
+[node name="Node2D" type="Node2D" parent="Player"]
+
 [node name="Spell_handler" parent="." instance=ExtResource("7_upkuh")]
 
 [node name="Platform" parent="." instance=ExtResource("6_0if6f")]

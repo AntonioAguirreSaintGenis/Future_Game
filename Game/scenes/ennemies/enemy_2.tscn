@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3 uid="uid://bydaos34d612f"]
+[gd_scene load_steps=23 format=3 uid="uid://bydaos34d612f"]
 
 [ext_resource type="Script" path="res://scripts/enemy_2.gd" id="1_m3fr1"]
 [ext_resource type="Texture2D" uid="uid://1taevwogbtx0" path="res://assets/sprites/enemies/enemigo-2_sprite_sheet.png" id="1_pd86o"]
@@ -129,6 +129,9 @@ size = Vector2(8.5, 8)
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_6lujh"]
 size = Vector2(10, 9.5)
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_jmu0o"]
+radius = 181.099
+
 [node name="Enemy2" type="CharacterBody2D"]
 collision_layer = 4
 collision_mask = 4
@@ -164,5 +167,11 @@ wait_time = 5.0
 
 [node name="Timer2" type="Timer" parent="."]
 
+[node name="Detection" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Detection"]
+shape = SubResource("CircleShape2D_jmu0o")
+
 [connection signal="timeout" from="Timer3" to="." method="_on_timer_timeout"]
 [connection signal="timeout" from="Timer2" to="." method="_on_timer_2_timeout"]
+[connection signal="body_entered" from="Detection" to="." method="_on_detection_body_entered"]
