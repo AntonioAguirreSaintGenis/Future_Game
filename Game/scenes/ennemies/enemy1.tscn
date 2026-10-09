@@ -264,8 +264,9 @@ func _process(delta):
 radius = 14.0
 height = 28.0
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_fxmt7"]
-size = Vector2(24, 29)
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_bkfo8"]
+radius = 8.0
+height = 29.5
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_xyig2"]
 size = Vector2(17, 13)
@@ -298,7 +299,8 @@ collision_layer = 4
 monitoring = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox_enemy1"]
-shape = SubResource("RectangleShape2D_fxmt7")
+position = Vector2(0, 0.25)
+shape = SubResource("CapsuleShape2D_bkfo8")
 debug_color = Color(1, 0, 0, 0.419608)
 
 [node name="Hitbox1" parent="." instance=ExtResource("3_l8bl2")]

@@ -24,11 +24,9 @@ func start_spell(player):
 		animated_sprite.flip_h = true
 		animated_sprite.offset.x = -offset
 		hitbox.scale.x = -1
-	animated_sprite.visible = true
-	hitbox.monitoring = true
 	position.y = player.position.y
 	position.x = player.position.x
 	animated_sprite.play()
-	timer = get_tree().create_timer(1.8)
+	timer.start(1.8)
 	await timer.timeout
 	queue_free()

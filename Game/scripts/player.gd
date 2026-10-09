@@ -23,7 +23,7 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var timer2 = $Timer2
 @onready var timer3 = $TimerMagic
 @onready var magic = get_parent().get_node("Spell_handler")
-@onready var spell_normal: String = "res://scenes/spells/laser.tscn"
+@onready var spell_normal: String = "res://scenes/spells/fire.tscn"
 @onready var spell_big: String = "res://scenes/spells/laser+fire.tscn"
 #@onready var blood = $CPUParticles2D
 

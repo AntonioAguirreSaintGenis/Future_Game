@@ -159,3 +159,5 @@ collision_mask = 4
 position = Vector2(79, 0)
 shape = SubResource("RectangleShape2D_7qh1f")
 debug_color = Color(0, 0, 1, 0.419608)
+
+[node name="Timer" type="Timer" parent="."]
