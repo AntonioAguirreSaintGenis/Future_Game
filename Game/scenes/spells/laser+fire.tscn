@@ -1,6 +1,7 @@
-[gd_scene load_steps=23 format=3 uid="uid://by7q08ref7ex"]
+[gd_scene load_steps=24 format=3 uid="uid://by7q08ref7ex"]
 
 [ext_resource type="Texture2D" uid="uid://1pmsy7kj8rkn" path="res://assets/sprites/spells/magia1+2-sprite_sheet.png" id="1_c8bou"]
+[ext_resource type="Script" path="res://scripts/laser+fire.gd" id="1_wnto3"]
 [ext_resource type="PackedScene" uid="uid://bj5nf3j55pidt" path="res://scenes/hitbox.tscn" id="2_e8s10"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_04p8u"]
@@ -141,7 +142,7 @@ animations = [{
 size = Vector2(126, 27)
 
 [node name="Laser+Fire" type="Area2D"]
-metadata/damage = 2
+script = ExtResource("1_wnto3")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_06anr")
@@ -157,3 +158,5 @@ collision_mask = 4
 position = Vector2(-2, 3.5)
 shape = SubResource("RectangleShape2D_4vwvd")
 debug_color = Color(0, 0, 1, 0.419608)
+
+[node name="Timer" type="Timer" parent="."]

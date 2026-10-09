@@ -23,5 +23,5 @@ func hit(damage):
 				elif victim.name == "Player":
 					pass
 					if victim.mana < 2:
-						victim.mana += 1
+						victim.mana += 3
 			#print(parent)

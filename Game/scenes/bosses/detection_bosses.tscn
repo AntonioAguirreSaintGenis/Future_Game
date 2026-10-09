@@ -1,0 +1,8 @@
+[gd_scene load_steps=2 format=3 uid="uid://ckp38epxallyr"]
+
+[ext_resource type="Script" path="res://scripts/detection_bosses.gd" id="1_ex718"]
+
+[node name="Detection_bosses" type="Area2D"]
+collision_layer = 15
+collision_mask = 15
+script = ExtResource("1_ex718")

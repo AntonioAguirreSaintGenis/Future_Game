@@ -25,6 +25,8 @@ var x
 var y
 var can_be_hit = true
 var agro = false
+var attack_timer_started = false
+var start_state = States.CHOOSE_ATTACK
 
 func _ready():
 	base_position = position
@@ -57,20 +59,21 @@ func _physics_process(delta):
 		position.y = move_toward(position.y, -50, speed/5 * delta * 10)
 		if position.y == -50:
 			rng.randomize()
-			random_int = rng.randi_range(5, 7)
+			random_int = rng.randi_range(4, 5)
 			timer3.wait_time = random_int
+			timer3.start()
 			state = States.IDLE
 	move_and_slide()
 
 
 func handle_attack(time1, time2, nb_attack, hitbox):
-	var timer 
-	var pos
+	var timer
 	if not timer_start:
-		velocity = Vector2(0, 0)
-		state_attack = "preparation_%d"%[nb_attack]
+		velocity = Vector2.ZERO
+		state_attack = "preparation_%d" % nb_attack
 		animated_sprite.play(state_attack)
 		timer_start = true
+		attack_timer_started = false
 		timer = get_tree().create_timer(time1)
 		await timer.timeout
 		state_attack = "idle"
@@ -80,24 +83,23 @@ func handle_attack(time1, time2, nb_attack, hitbox):
 			hitbox.collision_mask = 1 + 2
 	elif state_attack == "idle":
 		animated_sprite.play("idle")
-		pos = (Vector2(x, y) - position)
+		var pos = Vector2(x, y) - position
 		if nb_attack == 1:
 			x = target.position.x
 			y = target.position.y
-			pos = (Vector2(x, y) - position)
-			if pos.length() >= speed/10:
-				position += pos.normalized() * (speed/10)
+			pos = Vector2(x, y) - position
+			if pos.length() >= speed / 10:
+				position += pos.normalized() * (speed / 10)
 		else:
-			if pos.length() >= speed/10:
-				position += pos.normalized() * (speed/10)
-			timer = get_tree().create_timer(time2)
-			await timer.timeout
-			state = States.GO_UP
-			hitbox.collision_mask = 2
-			
-
-func _on_timer_timeout():
-	state = States.CHOOSE_ATTACK
+			if pos.length() >= speed / 10:
+				position += pos.normalized() * (speed / 10)
+			# Start this timer only once
+			if not attack_timer_started:
+				attack_timer_started = true
+				timer = get_tree().create_timer(time2)
+				await timer.timeout
+				state = States.GO_UP
+				hitbox.collision_mask = 2
 	
 func hitable():
 	return can_be_hit
@@ -112,10 +114,5 @@ func take_damage(damage):
 func _on_timer_2_timeout():
 	can_be_hit = true
 
-
-func _on_detection_body_entered(body):
-	if body == target and agro == false:
-		agro = true
-		timer3.wait_time = 0.5
-		timer3.start()
-		timer3.wait_time = 4
+func _on_timer_3_timeout():
+	state = States.CHOOSE_ATTACK

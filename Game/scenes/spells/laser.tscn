@@ -1,6 +1,6 @@
 [gd_scene load_steps=24 format=3 uid="uid://bfpfrs187pm78"]
 
-[ext_resource type="Script" path="res://scripts/hitbox.gd" id="1_rrt34"]
+[ext_resource type="Script" path="res://scripts/laser.gd" id="1_mdjyl"]
 [ext_resource type="Texture2D" uid="uid://dja3b6k21w47q" path="res://assets/sprites/spells/magia1.png" id="2_2bp0u"]
 [ext_resource type="PackedScene" uid="uid://bj5nf3j55pidt" path="res://scenes/hitbox.tscn" id="3_n1qn8"]
 
@@ -142,7 +142,7 @@ animations = [{
 size = Vector2(126, 20)
 
 [node name="Laser" type="Area2D"]
-script = ExtResource("1_rrt34")
+script = ExtResource("1_mdjyl")
 metadata/damage = 1
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]

@@ -10,9 +10,9 @@ func _ready():
 	player = get_tree().get_current_scene().get_node("Player")
 	healthbar.max_value = player.health
 	healthbar.value = player.health
-	manabar.max_value = 2
+	manabar.max_value = player.manabar_max_value
 	manabar.value = player.mana
-	ragebar.max_value = 6
+	ragebar.max_value = player.ragebar_max_value
 	ragebar.value = player.rage
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.

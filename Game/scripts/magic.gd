@@ -1,55 +1,45 @@
 extends Node2D
 
-var animated_sprite1
-var animated_sprite2
 var player
 var timer
-var spell1
-var spell2
-var spell
-var hitbox1
-var hitbox2
-var hitbox
-var offset1
-var offset2
-var offset
+var spell_normal
+var spell_big
 var spell_cast = false
+var spell
 
 func _ready():
-	spell1 = load("res://scenes/spells/laser.tscn").instantiate()
-	spell2 = load("res://scenes/spells/laser+fire.tscn").instantiate()
 	player = get_parent().get_node("Player")
-	add_child(spell1)
-	add_child(spell2)
-	hitbox1 = spell1.get_node("Hitbox")
-	hitbox2 = spell2.get_node("Hitbox")
-	animated_sprite1 = spell1.get_node("AnimatedSprite2D")
-	animated_sprite2 = spell2.get_node("AnimatedSprite2D")
-	animated_sprite1.visible = false
-	animated_sprite2.visible = false
-	hitbox1.monitoring = false
-	hitbox2.monitoring = false
-	offset1 = animated_sprite1.offset.x
-	offset2 = animated_sprite2.offset.x
+	spell_normal = load(player.spell_normal)
+	spell_big = load(player.spell_big)
 
-func _process(_delta):
-	if spell_cast:
-		hitbox.hit(spell.get_meta("damage"))
-
-func cast_spell(nb):
-	if nb == 1:
-		hitbox = hitbox1
-		offset = offset1
-		spell = spell1
-		do_spell(animated_sprite1)
+func cast_spell(select):
+	if select == false:
+		if spell_cast == false:
+			spell_cast = true
+			spell = spell_normal.instantiate()
+			if player.spell_normal != null and player.mana >= spell.cost:
+				player.mana -= spell.cost
+				do_spell(spell)
+				spell_cast = false
+			else:
+				spell.queue_free()
+				spell_cast = false
 	else:
-		hitbox = hitbox2
-		spell = spell2
-		offset = offset2
-		do_spell(animated_sprite2)
+		if spell_cast == false:
+			spell_cast = true
+			spell = spell_big.instantiate()
+			if player.spell_big != null and player.mana >= spell.cost:
+				player.mana -= spell.cost
+				do_spell(spell)
+				spell_cast = false
+			else:
+				spell.queue_free()
+				spell_cast = false
 		
-func do_spell(animated_sprite):
-	spell_cast = true
+func do_spell(spell):
+	add_child(spell)
+	spell.start_spell(player)
+	"""spell_cast = true
 	if not player.animated_sprite.flip_h:
 		animated_sprite.flip_h = false
 		animated_sprite.offset.x = offset
@@ -67,4 +57,4 @@ func do_spell(animated_sprite):
 	await timer.timeout
 	animated_sprite.visible = false
 	hitbox.monitoring = false
-	spell_cast = false
+	spell_cast = false"""

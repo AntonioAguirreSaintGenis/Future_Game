@@ -1,0 +1,18 @@
+[gd_scene load_steps=4 format=3 uid="uid://dp75qwkil2j5i"]
+
+[ext_resource type="Texture2D" uid="uid://ntfrbad35cvd" path="res://assets/sprites/room_door_placeholder.png" id="1_710v8"]
+[ext_resource type="Script" path="res://scripts/Room_door.gd" id="1_cwh0r"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_wcqpv"]
+size = Vector2(30, 224)
+
+[node name="Room_door" type="StaticBody2D"]
+collision_layer = 15
+collision_mask = 15
+script = ExtResource("1_cwh0r")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+texture = ExtResource("1_710v8")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_wcqpv")

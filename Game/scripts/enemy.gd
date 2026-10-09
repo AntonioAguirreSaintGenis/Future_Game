@@ -1,10 +1,9 @@
 extends CharacterBody2D
 
-enum States { IDLE, WALK, ATTACK1, ATTACK2, CHOOSE_ATTACK }
+enum States { IDLE, MOVE, ATTACK1, ATTACK2, CHOOSE_ATTACK }
 
 @onready var animated_sprite = $AnimatedSprite2D
 @onready var target: CharacterBody2D = get_parent().get_node("Player") 
-@onready var detection = $Detection
 @onready var hitbox1 = $Hitbox1
 @onready var hitbox2 = $Hitbox2
 @onready var hurtbox = $Hurtbox_enemy1
@@ -21,6 +20,7 @@ var timer_start
 var direction
 var can_be_hit = true
 var agro = false
+var start_state = States.MOVE
 
 func _ready():
 	rng.randomize()
@@ -28,7 +28,7 @@ func _ready():
 	
 func _physics_process(delta):
 	direction = target.position.x - position.x
-	if state == States.WALK:
+	if state == States.MOVE:
 		if abs(direction) > 20:
 			velocity.x = sign(direction) * speed
 		else:
@@ -79,7 +79,7 @@ func handle_attack(time1, time2, attack, frame1, frame2, hitbox):
 			animated_sprite.pause()
 			timer = get_tree().create_timer(time2)
 			await timer.timeout
-			state = States.WALK
+			state = States.MOVE
 			hitbox.collision_mask = 2	
 
 func hitable():
@@ -98,5 +98,5 @@ func _on_timer_2_timeout():
 
 func _on_detection_body_entered(body):
 	if body == target and agro == false:
-		state = States.WALK
+		state = States.MOVE
 		agro = true # Replace with function body.

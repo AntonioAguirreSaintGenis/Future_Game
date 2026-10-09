@@ -23,14 +23,16 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var timer2 = $Timer2
 @onready var timer3 = $TimerMagic
 @onready var magic = get_parent().get_node("Spell_handler")
+@onready var spell_normal: String = "res://scenes/spells/laser.tscn"
+@onready var spell_big: String = "res://scenes/spells/laser+fire.tscn"
 #@onready var blood = $CPUParticles2D
 
 var direction = 1
 var health = 3
-var mana = 2
+var mana = 6
 var rage = 6
 var state = "idle"
-var spell = "fire"
+#var spell = "fire"
 var damage = 1
 var double_jump = false
 var wall_jump = false
@@ -41,6 +43,8 @@ var jumping
 var timer_wall_and_jump = 0.0
 var can_be_hit = true
 var magic_timer = 0
+var ragebar_max_value = 6
+var manabar_max_value = 6
 
 func _ready():
 	hurtbox.monitorable = true
@@ -139,12 +143,11 @@ func _physics_process(delta):
 				priority = 0
 				dash()
 		elif Input.is_action_just_pressed("magic"):
-			if mana == 2: 
-				timer3.start(0.5)
-				magic_timer = 0
-				state = "magic_charge"
-				priority = 0
-				animated_sprite.play("charge jump") #placeholder
+			timer3.start(0.5)
+			magic_timer = 0
+			state = "magic_charge"
+			priority = 0
+			animated_sprite.play("charge jump") #placeholder
 		elif Input.is_action_just_pressed("potion") and is_on_floor():
 			state = "potion"
 			priority = 0
@@ -261,24 +264,20 @@ func potion():
 		rage = 0
 		animated_sprite.play("potion")
 		health += 1
-		if mana < 2:
-			mana += 1
+		if mana < 4:
+			mana += 3
+		else:
+			mana = 6
 func doBigMagic():
-	if magic.spell_cast == false:
-		if mana == 2:
-			mana = 0
-			animated_sprite.play("magic")
-			timer.start(0.4)
-			await timer.timeout
-			magic.cast_spell(2)
+	animated_sprite.play("magic")
+	timer.start(0.4)
+	await timer.timeout
+	magic.cast_spell(true)
 func doNormalMagic():
-	if magic.spell_cast == false:
-		if mana == 2:
-			mana = 0
-			animated_sprite.play("magic")
-			timer.start(0.4)
-			await timer.timeout
-			magic.cast_spell(1)
+	animated_sprite.play("magic")
+	timer.start(0.4)
+	await timer.timeout
+	magic.cast_spell(false)
 func move_left():
 	animated_sprite.play("walk")
 func move_right():
