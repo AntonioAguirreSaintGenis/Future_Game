@@ -26,6 +26,6 @@ func start_spell(player):
 	position.y = player.position.y
 	position.x = player.position.x
 	animated_sprite.play()
-	timer.statr(1.8)
+	timer.start(1.8)
 	await timer.timeout
 	queue_free()

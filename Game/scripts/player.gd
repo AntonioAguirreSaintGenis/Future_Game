@@ -50,6 +50,12 @@ func _ready():
 	hurtbox.monitorable = true
 	
 func _physics_process(delta):
+	if state != "dash":
+		if is_on_floor():
+			collision_mask = 1 + 4
+		else:
+			collision_mask = 1
+	
 	#x velocity
 	direction = Input.get_axis("move_left", "move_right")
 	if priority != 0:
@@ -80,7 +86,7 @@ func _physics_process(delta):
 				priority = 3
 				wall()
 	else:
-			velocity.x = move_toward(velocity.x, 0, SPEED*delta*2)
+		velocity.x = move_toward(velocity.x, 0, SPEED*delta*2)
 
 	
 	#y velocity

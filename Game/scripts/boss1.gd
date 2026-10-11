@@ -144,12 +144,12 @@ func attack1():
 func attack2():
 	direction = sign(target.global_position.x - global_position.x)
 	damage = 2
-	collision_layer = 4
+	#collision_layer = 4
 	hitbox = hitbox2
 	animated_sprite.play("attack3-1")
 	while not is_on_floor():
 		await get_tree().physics_frame
-	collision_layer = 1
+	#collision_layer = 1
 	animated_sprite.play("attack3-2")
 	timer.start(0.5)
 	timer_start = true

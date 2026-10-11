@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://vds1y0b3ur34" path="res://assets/sprites/spells/spirit_bullet_spritesheet.png" id="2_gwmjh"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_1okg0"]
-size = Vector2(7, 5)
+size = Vector2(10.5, 6)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_1qhyc"]
 atlas = ExtResource("2_gwmjh")
@@ -194,18 +194,19 @@ animations = [{
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_u5kuy"]
-size = Vector2(7, 5)
+size = Vector2(8, 4)
 
 [node name="spirit_bullet" type="Area2D"]
-collision_layer = 15
+collision_layer = 0
 collision_mask = 15
 script = ExtResource("1_q0cpr")
 
 [node name="Hitbox" parent="." instance=ExtResource("1_7lb00")]
+collision_layer = 0
 collision_mask = 4
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
-position = Vector2(-1.5, 1.5)
+position = Vector2(-2, 1)
 shape = SubResource("RectangleShape2D_1okg0")
 debug_color = Color(0, 0, 1, 0.419608)
 
@@ -216,7 +217,7 @@ animation = &"move"
 [node name="Timer" type="Timer" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2(-1.5, 1.5)
+position = Vector2(-2, 1)
 shape = SubResource("RectangleShape2D_u5kuy")
 
 [connection signal="area_entered" from="." to="." method="_on_area_entered"]

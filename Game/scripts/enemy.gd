@@ -86,6 +86,7 @@ func hitable():
 	return can_be_hit
 
 func take_damage(damage):
+	print(2)
 	can_be_hit = false
 	timer2.start(1)
 	health -= damage

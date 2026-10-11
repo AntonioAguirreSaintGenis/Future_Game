@@ -496,8 +496,8 @@ scale_min = 0.1
 scale_max = 0.3
 
 [node name="CharacterBody2D" type="CharacterBody2D"]
-collision_layer = 8
-collision_mask = 4
+collision_layer = 4
+collision_mask = 8
 script = ExtResource("1_3xons")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
@@ -508,6 +508,7 @@ animation = &"attack1-2"
 shape = SubResource("CapsuleShape2D_narky")
 
 [node name="Hitbox3" parent="." instance=ExtResource("3_8e847")]
+collision_layer = 0
 collision_mask = 3
 monitorable = false
 
@@ -517,6 +518,7 @@ shape = SubResource("RectangleShape2D_yjoq1")
 debug_color = Color(0, 0, 0.807843, 0.419608)
 
 [node name="Hitbox1" parent="." instance=ExtResource("3_8e847")]
+collision_layer = 0
 collision_mask = 2
 monitorable = false
 
@@ -526,6 +528,7 @@ shape = SubResource("RectangleShape2D_r2wf0")
 debug_color = Color(0, 0, 0.866667, 0.419608)
 
 [node name="Hitbox2" parent="." instance=ExtResource("3_8e847")]
+collision_layer = 0
 collision_mask = 2
 monitorable = false
 
@@ -536,6 +539,7 @@ debug_color = Color(0, 0, 0.909804, 0.419608)
 
 [node name="Hurtbox" type="Area2D" parent="."]
 collision_layer = 4
+collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 shape = SubResource("CapsuleShape2D_k2x6q")

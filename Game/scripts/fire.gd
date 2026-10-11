@@ -7,14 +7,18 @@ var spell_cast = false
 var damage = 1
 var offset = 50
 var cost = 3
+var on_floor = false
 
 
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	if spell_cast:
 		hitbox.hit(damage)
+		if not on_floor:
+			position.y += 1
 
 func start_spell(player):
+	visible = false
 	spell_cast = true
 	if not player.animated_sprite.flip_h:
 		animated_sprite.flip_h = false
@@ -26,7 +30,14 @@ func start_spell(player):
 		hitbox.scale.x = -1
 	position.y = player.position.y
 	position.x = player.position.x
+
+func next():
 	animated_sprite.play()
 	timer.start(1.8)
 	await timer.timeout
 	queue_free()
+
+func _on_body_entered(body):
+	on_floor = true
+	visible = true
+	next()

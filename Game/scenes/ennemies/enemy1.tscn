@@ -275,8 +275,8 @@ size = Vector2(17, 13)
 b = Vector2(-17, 0)
 
 [node name="Enemy1" type="CharacterBody2D"]
-collision_layer = 8
-collision_mask = 4
+collision_layer = 4
+collision_mask = 8
 script = ExtResource("1_c1npq")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
@@ -296,6 +296,7 @@ target_position = Vector2(-96, 0)
 
 [node name="Hurtbox_enemy1" type="Area2D" parent="."]
 collision_layer = 4
+collision_mask = 0
 monitoring = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox_enemy1"]
@@ -304,6 +305,7 @@ shape = SubResource("CapsuleShape2D_bkfo8")
 debug_color = Color(1, 0, 0, 0.419608)
 
 [node name="Hitbox1" parent="." instance=ExtResource("3_l8bl2")]
+collision_layer = 0
 collision_mask = 2
 monitorable = false
 
@@ -313,6 +315,7 @@ shape = SubResource("RectangleShape2D_xyig2")
 debug_color = Color(0, 0, 1, 0.419608)
 
 [node name="Hitbox2" parent="." instance=ExtResource("3_l8bl2")]
+collision_layer = 0
 collision_mask = 2
 monitorable = false
 
