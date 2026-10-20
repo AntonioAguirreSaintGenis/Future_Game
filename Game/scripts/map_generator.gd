@@ -1,7 +1,22 @@
 extends TileMap
 
 @onready var player = $Player
+@onready var camera = $Player/Camera2D
 
+const DOOR_TILE = Vector2i(0, 1)
+const SIDES = [Vector2i(0, -1), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(1, 0)]
+const MAX_LAYERS = 5      # a side gets between MIN_LAYERS and MAX_LAYERS layers
+const MIN_LAYERS = 2
+
+const SKIP_CHANCE = 0.05#0.035
+const SKIP_CHANCE_ONE_EMPTY = 0.95
+const SKIP_CHANCE_MANY_EMPTY =  0.25
+
+const CAM_SPEED_NORMAL = 25.0      # follow speed inside a room
+const CAM_SPEED_TRANSITION = 5.0   # glide speed after changing region
+const CAM_TRANSITION_TIME = 0.7
+
+var obstacles = {}
 var CARDINAL = ["NORTH", "SOUTH", "EAST", "WEST"]
 var map = [] #the main matrix, where rooms will be placed.
 var region_map = [] #stores wich rooms belong together to form big rooms.
@@ -18,6 +33,17 @@ var rooms_placed
 var direction
 var rng = RandomNumberGenerator.new()
 var nb_rooms = 0
+var room_size = 20
+var skip_streaks = []  # consecutive skipped tiles right before the current one
+var current_room = Vector2i(-1, -1)
+var region_bounds = {}  # region id -> Rect2i in cell coords
+var current_region = -2
+var camera_tween: Tween
+var region_rect = Rect2()
+var transition_left = 0.0
+var big_rooms = {}
+var doors = {}
+
 
 func _ready():
 	rng.randomize()
@@ -62,15 +88,15 @@ func _ready():
 			elif direction == "EAST" and drunkards[i][0] < WIDTH-1:
 				drunkards[i][0] += 1
 	var candidates = flood_fill_zones(map, visited)
+	compute_region_bounds()
 	var group_edges = candidates[1]
-	player.position = map_to_local(Vector2(candidates[2][0] * 10 + 3, candidates[2][1] * 10 + 5))
+	player.position = map_to_local(Vector2(candidates[2][0] * room_size + MAX_LAYERS, candidates[2][1] * room_size + MAX_LAYERS))
 	candidates = candidates[0]
-	var T = randomized_kruskal(map, group_edges)
+	doors = randomized_kruskal(map, group_edges)
 	#var edges = zone_edges()
-	apply_zones_to_tiles(candidates, T)
+	apply_zones_to_tiles(candidates, doors)
 	
 	#draw empty tiles
-	var room_size = 10
 	for y in range(HEIGHT):
 		for x in range(WIDTH):
 			if map[y][x] == 0:
@@ -80,6 +106,40 @@ func _ready():
 	#set_cell(0, Vector2i(0, 0), 0, Vector2i(7, 0))
 	#print_map(map)
 
+func _physics_process(_delta):
+	var cell = get_room_of(player.global_position)
+	if cell.x < 0 or cell.y < 0 or cell.x >= WIDTH or cell.y >= HEIGHT:
+		return
+	var region = region_map[cell.y][cell.x]
+	if region != current_region and region_bounds.has(region):
+		current_region = region
+		update_camera_limits(region_bounds[region])
+
+func get_room_of(global_pos: Vector2) -> Vector2i:
+	var tile = local_to_map(to_local(global_pos))
+	# floori so it still behaves if the player ever goes into negative coords
+	return Vector2i(floori(float(tile.x) / room_size), floori(float(tile.y) / room_size))
+
+func update_camera_limits(bounds: Rect2i) -> void:
+	var tile_px = Vector2(tile_set.tile_size)
+	var top_left = to_global(Vector2(bounds.position * room_size) * tile_px)
+	var bottom_right = to_global(Vector2(bounds.end * room_size) * tile_px)
+	# First call: snap, because the default limits are +/-10,000,000
+	"""var duration = 0.7 if camera_tween else 0.0
+	if camera_tween:
+		camera_tween.kill()
+	camera_tween = create_tween().set_parallel(true)
+	camera_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	camera_tween.tween_property(camera, "limit_left", int(top_left.x), duration)
+	camera_tween.tween_property(camera, "limit_top", int(top_left.y), duration)
+	camera_tween.tween_property(camera, "limit_right", int(bottom_right.x), duration)
+	camera_tween.tween_property(camera, "limit_bottom", int(bottom_right.y), duration)"""
+	#camera.position_smoothing_speed = 2
+	camera.limit_left = int(top_left.x)
+	camera.limit_top = int(top_left.y)
+	camera.limit_right = int(bottom_right.x)
+	camera.limit_bottom = int(bottom_right.y)
+
 
 func apply_zones_to_tiles(candidates, T):
 	#This function calls the function to draw each room.
@@ -87,7 +147,8 @@ func apply_zones_to_tiles(candidates, T):
 	#that corresponds to a room.
 	#T stores the doors between rooms.
 	for i in candidates:
-		create_room(i[0], i[1], zone_map[i[1]][i[0]], 10, T)
+		var zone = zone_map[i[1]][i[0]]
+		create_room(i[0], i[1], zone_map[i[1]][i[0]], room_size, T)
 				
 func flood_fill_zones(map, visited_original):
 	#This functions gives a zone to each (x, y) position in the map that
@@ -221,64 +282,97 @@ func flood_fill_zones(map, visited_original):
 								zone_sizes[z] += region_cells[region].size()
 								active = true
 	return [candidates, groups_edges, zone_0]
-				
+
+
 func create_room(x, y, zone, size, T):
-	# Draws the rooms in the tilemap. It takes the room's coordinates and zone.
-	var color = Vector2i(zone, 0)
-	var value = map[y][x]
-	var a = Vector2i(x, y)
-	# Top wall
-	if has_open_connection(T, a, Vector2i(x, y - 1)):
-		for i in range(size):
-			if i >= size / 4 and i < 3 * size / 4:
-				# Door opening
-				set_cell(0, Vector2i(x * size + i, y * size), 0, Vector2i(0, 1))
-			else:
-				# Wall
-				set_cell(0, Vector2i(x * size + i, y * size), 0, color)
-	elif y == 0 or map[y - 1][x] != value or zone_map[y - 1][x] != zone:
-		for i in range(size):
-			set_cell(0, Vector2i(x * size + i, y * size), 0, color)
+	# Draws the border of one map cell, side by side.
+	var cell = Vector2i(x, y)
+	for dir in SIDES:
+		draw_side(cell, dir, zone, size, T)
+		
+func draw_side(cell: Vector2i, dir: Vector2i, zone: int, size: int, T) -> void:
+	# Decides what goes on one side of the cell: a wall with a door,
+	# a plain wall, or nothing (same big room).
+	var neighbor = cell + dir
+	if has_open_connection(T, cell, neighbor):
+		draw_wall(cell, dir, zone, size, true)
+	elif is_room_boundary(cell, neighbor, zone):
+		draw_wall(cell, dir, zone, size, false)
+	else:
+		link_rooms(cell, neighbor)   # same big room, in bounds (out of bounds counts as boundary)
 
-	# Bottom wall
-	if has_open_connection(T, a, Vector2i(x, y + 1)):
-		for i in range(size):
-			if i >= size / 4 and i < 3 * size / 4:
-				# Door opening
-				set_cell(0, Vector2i(x * size + i, y * size + size - 1), 0, Vector2i(0, 1))
-			else:
-				# Wall
-				set_cell(0, Vector2i(x * size + i, y * size + size - 1), 0, color)
-	elif y == HEIGHT - 1 or map[y + 1][x] != value or zone_map[y + 1][x] != zone:
-		for i in range(size):
-			set_cell(0, Vector2i(x * size + i, y * size + size - 1), 0, color)
+func is_room_boundary(cell: Vector2i, neighbor: Vector2i, zone: int) -> bool:
+	# True if the neighbor is outside the map or is not part of the same big room.
+	if neighbor.x < 0 or neighbor.x >= WIDTH or neighbor.y < 0 or neighbor.y >= HEIGHT:
+		return true
+	return map[neighbor.y][neighbor.x] != map[cell.y][cell.x] or zone_map[neighbor.y][neighbor.x] != zone
+		
+func draw_wall(cell: Vector2i, dir: Vector2i, zone: int, size: int, with_door: bool) -> void:
+	# Draws the wall on the side of `cell` facing `dir`, and the obstacles
+	# stacked against it, in a single pass over the tiles of that side.
+	var wall_tile
+	var start = cell * size + Vector2i(maxi(dir.x, 0), maxi(dir.y, 0)) * (size - 1)
+	var step = Vector2i(absi(dir.y), absi(dir.x))
+	var layers = rng.randi_range(MIN_LAYERS, MAX_LAYERS)  # obstacle layers for this side
+	var left_depth = 0
+	var right_depth = 0
+	var door_first = size / 4
+	var door_last = 3 * size / 4 - 1
+	skip_streaks = []
+	for i in range(MAX_LAYERS):
+		skip_streaks.append(0)
+	for i in range(size):
+		var pos = start + step * i
+		if with_door and is_door_index(i, size):
+			#set_cell(0, pos, 0, DOOR_TILE)  # doorway: no obstacles here
+			continue
+		wall_tile = Vector2i(rng.randi_range(0, 7), 2) #reemplazar por zone si quiero zona
+		set_cell(0, pos, 0, wall_tile)
+		var depth = add_obstacle_column(pos, dir, i, size, layers, wall_tile)
+		if i == door_first - 1:
+			left_depth = depth
+		elif i == door_last + 1:
+			right_depth = depth
+	if with_door:
+		var door_depth = 0
+		if dir.y != 0:   # only top/bottom walls
+			door_depth = mini(left_depth, right_depth)
+		for i in range(door_first, door_last + 1):
+			set_cell(0, start + step * i - dir * door_depth, 0, DOOR_TILE)
+			
+func add_obstacle_column(wall_pos: Vector2i, dir: Vector2i, i: int, size: int, layers: int, tile: Vector2i):
+	# Stacks obstacles against the wall tile at `wall_pos`, going inward.
+	# Layer k only exists in columns k to size - k - 1, so column i takes
+	# part in min(layers, i, size - 1 - i) layers.
+	var min_depth = size / 4 - 1 #the minimum so that there isn't walls next to doors
+	var max_depth = mini(layers, maxi(mini(i, size - 1 - i), min_depth))
+	var depth = 0
+	for n in range(max_depth):
+		if rng.randf() < get_skip_chance(n, i, size):
+			skip_streaks[n] += 1
+			continue
+		depth += 1
+		var pos = wall_pos - dir * depth
+		tile = Vector2i(rng.randi_range(0, 7), 2) #cambiar si estamos seteando por zona
+		set_cell(0, pos, 0, tile)
+		skip_streaks[n] = 0
+		obstacles[pos] = true
+	return depth
 
-	# Left wall
-	if has_open_connection(T, a, Vector2i(x - 1, y)):
-		for j in range(size):
-			if j >= size / 4 and j < 3 * size / 4:
-				# Door opening
-				set_cell(0, Vector2i(x * size, y * size + j), 0, Vector2i(0, 1))
-			else:
-				# Wall
-				set_cell(0, Vector2i(x * size, y * size + j), 0, color)
-	elif x == 0 or map[y][x - 1] != value or zone_map[y][x - 1] != zone:
-		for j in range(size):
-			set_cell(0, Vector2i(x * size, y * size + j), 0, color)
+func get_skip_chance(n, i, size) -> float:
+	if i <= 1 or i >= size - 2:
+		return 0.0
+	elif skip_streaks[n] == 0:
+		return SKIP_CHANCE
+	elif skip_streaks[n] <= 3:
+		return SKIP_CHANCE_ONE_EMPTY
+	return SKIP_CHANCE_MANY_EMPTY
 
-	# Right wall
-	if has_open_connection(T, a, Vector2i(x + 1, y)):
-		for j in range(size):
-			if j >= size / 4 and j < 3 * size / 4:
-				# Door opening
-				set_cell(0, Vector2i(x * size + size - 1, y * size + j), 0, Vector2i(0, 1))
-			else:
-				# Wall
-				set_cell(0, Vector2i(x * size + size - 1, y * size + j), 0, color)
-	elif x == WIDTH - 1 or map[y][x + 1] != value or zone_map[y][x + 1] != zone:
-		for j in range(size):
-			set_cell(0, Vector2i(x * size + size - 1, y * size + j), 0, color)
+func is_door_index(i: int, size: int) -> bool:
+	# The door is the middle half of the wall.
+	return i >= size / 4 and i < 3 * size / 4
 	
+
 func choose_border(map):
 	#finds a random node in the border of the map, then returns it.
 	var candidates = []
@@ -393,6 +487,18 @@ func union(parent, rank, a, b):
 
 	return true
 
+func compute_region_bounds() -> void:
+	for y in range(HEIGHT):
+		for x in range(WIDTH):
+			var r = region_map[y][x]
+			if r == -1:
+				continue
+			var cell_rect = Rect2i(x, y, 1, 1)
+			if region_bounds.has(r):
+				region_bounds[r] = region_bounds[r].merge(cell_rect)
+			else:
+				region_bounds[r] = cell_rect
+
 func has_open_connection(T, a: Vector2i, b: Vector2i) -> bool:
 	#returns true of there is a door beyween a or b.
 	return T.has([a, b]) or T.has([b, a])
@@ -402,3 +508,19 @@ func same_region(a: Vector2i, b: Vector2i) -> bool:
 	if b.x < 0 or b.y < 0 or b.x >= WIDTH or b.y >= HEIGHT:
 		return false
 	return region_map[a.y][a.x] == region_map[b.y][b.x]
+	
+func register_room(cell: Vector2i) -> void:
+	if not big_rooms.has(cell):
+		big_rooms[cell] = [cell]
+		
+func link_rooms(a: Vector2i, b: Vector2i) -> void:
+	register_room(a)
+	register_room(b)
+	var group_a = big_rooms[a]
+	var group_b = big_rooms[b]
+	if group_a.has(b):   # already known to be together (every pair is visited twice)
+		return
+	# merge b's group into a's, and repoint every member of b to the merged array
+	for room in group_b:
+		group_a.append(room)
+		big_rooms[room] = group_a

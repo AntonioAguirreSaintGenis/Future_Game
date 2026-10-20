@@ -50,16 +50,16 @@ func _physics_process(delta):
 		elif random_int > 1:
 			state = States.ATTACK2
 	elif state == States.ATTACK1:
-		handle_attack(1, 3, 1, hitbox)
+		handle_attack(1, 5, 1, hitbox)
 		hitbox.hit(damage)
 	elif state == States.ATTACK2:
 		handle_attack(1, 3, 2, hitbox)
 		hitbox.hit(damage)
 	elif state == States.GO_UP:
-		position.y = move_toward(position.y, -50, speed/5 * delta * 10)
+		position.y = move_toward(position.y, -50, speed/3 * delta * 10)
 		if position.y == -50:
 			rng.randomize()
-			random_int = rng.randi_range(4, 5)
+			random_int = rng.randf_range(2, 3)
 			timer3.wait_time = random_int
 			timer3.start()
 			state = States.IDLE
@@ -83,23 +83,16 @@ func handle_attack(time1, time2, nb_attack, hitbox):
 			hitbox.collision_mask = 1 + 2
 	elif state_attack == "idle":
 		animated_sprite.play("idle")
-		var pos = Vector2(x, y) - position
 		if nb_attack == 1:
 			x = target.position.x
 			y = target.position.y
-			pos = Vector2(x, y) - position
-			if pos.length() >= speed / 10:
-				position += pos.normalized() * (speed / 10)
-		else:
-			if pos.length() >= speed / 10:
-				position += pos.normalized() * (speed / 10)
-			# Start this timer only once
-			if not attack_timer_started:
-				attack_timer_started = true
-				timer = get_tree().create_timer(time2)
-				await timer.timeout
-				state = States.GO_UP
-				hitbox.collision_mask = 2
+		var pos = Vector2(x, y) - position
+		if pos.length() >= speed / 10:
+			position += pos.normalized() * (speed / 10)
+		if not attack_timer_started:
+			attack_timer_started = true
+			await get_tree().create_timer(time2).timeout
+			state = States.GO_UP
 	
 func hitable():
 	return can_be_hit

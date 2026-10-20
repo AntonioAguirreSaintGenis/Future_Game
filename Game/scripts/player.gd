@@ -27,6 +27,9 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var spell_big: String = "res://scenes/spells/laser+fire.tscn"
 #@onready var blood = $CPUParticles2D
 
+const COYOTE_TIME = 0.1
+
+var coyote_timer = 0.0
 var direction = 1
 var health = 3
 var mana = 6
@@ -55,6 +58,10 @@ func _physics_process(delta):
 			collision_mask = 1 + 4
 		else:
 			collision_mask = 1
+	if is_on_floor():
+		coyote_timer = COYOTE_TIME
+	else:
+		coyote_timer = max(coyote_timer - delta, 0.0)
 	
 	#x velocity
 	direction = Input.get_axis("move_left", "move_right")
@@ -94,7 +101,7 @@ func _physics_process(delta):
 		velocity.y += (get_gravity() * delta)/2
 	elif state == "wall":
 		velocity.y = 10
-		if not is_on_wall():
+		if not is_on_wall() or is_on_floor():
 			timer_wall_and_jump += delta
 			if timer_wall_and_jump > 0.3:
 				state = "fall"
@@ -163,7 +170,7 @@ func _physics_process(delta):
 			priority = 0
 			block()
 	if priority > 1:
-		if is_on_floor():
+		if is_on_floor() or coyote_timer > 0.0:
 			if Input.is_action_just_pressed("jump"):
 				if Input.is_action_pressed("down"):
 					state = "charge jump"
@@ -208,7 +215,7 @@ func _physics_process(delta):
 		dashing = false
 	if is_on_wall():
 		dashing = false
-	
+
 func attack():
 	hitbox.hit(damage)
 	animated_sprite.play("attack")

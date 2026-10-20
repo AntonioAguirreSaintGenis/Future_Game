@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://cc0l0n7sblf3u"]
+
+[ext_resource type="Script" path="res://scripts/minimap.gd" id="1_d1qcs"]
+
+[node name="Control" type="Control"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 30.0
+offset_bottom = 30.0
+script = ExtResource("1_d1qcs")
