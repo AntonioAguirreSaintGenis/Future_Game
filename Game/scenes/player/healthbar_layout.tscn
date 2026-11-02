@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3 uid="uid://c6bmdn5r26sss"]
+[gd_scene load_steps=8 format=3 uid="uid://c6bmdn5r26sss"]
 
 [ext_resource type="Script" path="res://scripts/Healthbar.gd" id="1_lbn80"]
 [ext_resource type="Texture2D" uid="uid://pbjo108iqkfq" path="res://assets/sprites/ui/health_bar.png" id="2_pdys8"]
@@ -7,7 +7,6 @@
 [ext_resource type="Texture2D" uid="uid://dqnsp2c2kb38b" path="res://assets/sprites/ui/mana_bar_progress.png" id="5_0yc25"]
 [ext_resource type="Texture2D" uid="uid://dukuwposh87cd" path="res://assets/sprites/ui/rage_bar.png" id="6_sedfv"]
 [ext_resource type="Texture2D" uid="uid://7jx8ldxviexx" path="res://assets/sprites/ui/rage_bar_progress.png" id="7_1naxh"]
-[ext_resource type="PackedScene" uid="uid://cc0l0n7sblf3u" path="res://scenes/minimap.tscn" id="8_e8n3n"]
 
 [node name="BarsUI" type="CanvasLayer"]
 scale = Vector2(5, 5)
@@ -43,8 +42,3 @@ value = 20.0
 fill_mode = 3
 texture_under = ExtResource("6_sedfv")
 texture_progress = ExtResource("7_1naxh")
-
-[node name="Control" parent="." instance=ExtResource("8_e8n3n")]
-offset_left = 113.0
-offset_right = 143.0
-scale = Vector2(0.5, 0.5)

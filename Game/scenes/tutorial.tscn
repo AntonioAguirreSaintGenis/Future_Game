@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3 uid="uid://cdrx2syyg2vda"]
+[gd_scene load_steps=23 format=3 uid="uid://cdrx2syyg2vda"]
 
 [ext_resource type="Texture2D" uid="uid://b58ocgxm74ng1" path="res://assets/sprites/map1_sprite_sheet.png" id="1_pylhj"]
 [ext_resource type="PackedScene" uid="uid://c1dj74ph6tnta" path="res://scenes/damagezone.tscn" id="2_c6m1y"]
@@ -12,6 +12,7 @@
 [ext_resource type="PackedScene" uid="uid://bydaos34d612f" path="res://scenes/ennemies/enemy_2.tscn" id="8_n6tbs"]
 [ext_resource type="PackedScene" uid="uid://c5pqqal3hkir7" path="res://scenes/levels/boss1_room1.tscn" id="11_7o7b5"]
 [ext_resource type="PackedScene" uid="uid://nrjom7x62676" path="res://scenes/spells/spell_handler.tscn" id="12_1sdv3"]
+[ext_resource type="PackedScene" uid="uid://cb5jmntf43qf0" path="res://scenes/ennemies/enemy_3.tscn" id="13_iumta"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3n1ul"]
 texture = ExtResource("1_pylhj")
@@ -332,6 +333,9 @@ radius = 86.0
 [sub_resource type="CircleShape2D" id="CircleShape2D_j5ixy"]
 radius = 170.188
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_uijwv"]
+radius = 179.402
+
 [node name="Game" type="Node2D"]
 
 [node name="TileMap" type="TileMap" parent="."]
@@ -412,3 +416,11 @@ shape = SubResource("CircleShape2D_j5ixy")
 position = Vector2(1744, 0)
 
 [node name="Spell_handler" parent="." instance=ExtResource("12_1sdv3")]
+
+[node name="Enemy5" parent="." instance=ExtResource("13_iumta")]
+position = Vector2(285, -25)
+
+[node name="Detection" parent="Enemy5" instance=ExtResource("8_ct6rh")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy5/Detection"]
+shape = SubResource("CircleShape2D_uijwv")

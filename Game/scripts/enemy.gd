@@ -96,7 +96,6 @@ func take_damage(damage):
 func _on_timer_2_timeout():
 	can_be_hit = true
 
-
 func _on_detection_body_entered(body):
 	if body == target and agro == false:
 		state = States.MOVE

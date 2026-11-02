@@ -289,6 +289,33 @@ func create_room(x, y, zone, size, T):
 	var cell = Vector2i(x, y)
 	for dir in SIDES:
 		draw_side(cell, dir, zone, size, T)
+
+	var draw_obstacles = rng.randi_range(0, 3)
+	var above = cell + Vector2i(0, -1)
+	var below = cell + Vector2i(0, 1)
+	var left = cell + Vector2i(-1, 0)
+	var right = cell + Vector2i(1, 0)
+	var connection_above = has_open_connection(T, cell, above)
+	var connection_below = has_open_connection(T, cell, below)
+	var connection_left = has_open_connection(T, cell, left)
+	var connection_right = has_open_connection(T, cell, right)
+	if draw_obstacles > 0:
+		#we create obstacles only from up or down but not both so that we do not block completely the way.
+		if draw_obstacles == 1:
+			draw_one_of_kind_obstacle(cell, connection_above, connection_below, above, below, connection_left, connection_right, left, right, x, y)
+		#here are the obstacles that can't block the way no matter what
+		elif draw_obstacles == 2:
+			draw_multiple_of_kind_obstacle(x, y)
+		else:
+			var one_of_kind = bool(randi() % 2)
+			if one_of_kind:
+				draw_one_of_kind_obstacle(cell, connection_above, connection_below, above, below, connection_left, connection_right, left, right, x, y)
+				for i in range(1, rng.randi_range(draw_obstacles, draw_obstacles + 2)):
+					draw_multiple_of_kind_obstacle(x, y)
+			else:
+				for i in range(rng.randi_range(draw_obstacles, draw_obstacles + 2)):
+					draw_multiple_of_kind_obstacle(x, y)
+		#one_way_platform_symetrical_low(x, y, 0.25)
 		
 func draw_side(cell: Vector2i, dir: Vector2i, zone: int, size: int, T) -> void:
 	# Decides what goes on one side of the cell: a wall with a door,
@@ -524,3 +551,241 @@ func link_rooms(a: Vector2i, b: Vector2i) -> void:
 	for room in group_b:
 		group_a.append(room)
 		big_rooms[room] = group_a
+		
+#terrain obscacles generation functions
+func pillar(room_x, room_y, from_ceiling, probability):
+	var chance_vertical
+	var chance_horizontal
+	var max_height = room_size - 1 - MAX_LAYERS - 3
+	var x = rng.randi_range(MAX_LAYERS + 1, room_size - max_height)
+	# from_ceiling: the pillar hangs down (0, 1). Otherwise it grows up from the floor (0, -1).
+	var grow = Vector2i(0, 1) if from_ceiling else Vector2i(0, -1)
+	var base = Vector2i(room_x * room_size + x, room_y * room_size)
+	if not from_ceiling:
+		base.y += room_size - 1   # wall row
+	# keeps 2 free blocks between the pillar's tip and the opposite wall's layers,
+	# assuming the pillar starts right at the wall. Reduced below by the offset.
+	for i in range(rng.randi_range(2, 5)):   # horizontal: max width of 3 columns
+		chance_horizontal = 1.0 if i < 2 else 1.0 - 0.5
+		if rng.randf() > chance_horizontal:
+			break
+		# first row inside the wall, then skip past the obstacle stack of this column
+		var start = base + Vector2i(i, 0) + grow
+		var offset = 0
+		while offset < room_size and obstacles.has(start + grow * offset):
+			offset += 1
+		start += grow * offset
+		# the taller the stack under the pillar, the less room is left above it
+		var height = mini(rng.randi_range(4, 8), max_height - offset)
+		for j in range(height):
+			chance_vertical = 1.0 if j <= height * 0.5 else 1.0 - probability
+			var pos = start + grow * j
+			if rng.randf() > chance_vertical or obstacles.has(pos):
+				break
+			set_cell(0, pos, 0, Vector2i(rng.randi_range(0, 7), 2))
+			obstacles[pos] = true
+
+func pillar_horizontal(room_x, room_y, from_left, probability):
+	var chance_vertical
+	var chance_horizontal
+	var max_width = room_size - 1 - MAX_LAYERS - 3
+	var y = rng.randi_range(MAX_LAYERS + 1, room_size - max_width)
+	# from_left: pillar grows right (1, 0). Otherwise it grows left (-1, 0).
+	var grow = Vector2i(1, 0) if from_left else Vector2i(-1, 0)
+	var base = Vector2i(room_x * room_size, room_y * room_size + y)
+	if not from_left:
+		base.x += room_size - 1
+	for i in range(rng.randi_range(2, 5)):
+		chance_horizontal = 1.0 if i < 2 else 1.0 - 0.5
+		if rng.randf() > chance_horizontal:
+			break
+		# First column inside the wall, then skip past existing obstacles.
+		var start = base + Vector2i(0, i) + grow
+		var offset = 0
+		while offset < room_size and obstacles.has(start + grow * offset):
+			offset += 1
+		start += grow * offset
+		# The wider the existing obstacle stack, the less room remains.
+		var width = mini(rng.randi_range(4, 8), max_width - offset)
+		for j in range(width):
+			chance_vertical = 1.0 if j <= width * 0.5 else 1.0 - probability
+			var pos = start + grow * j
+			if rng.randf() > chance_vertical or obstacles.has(pos):
+				break
+			set_cell(0, pos, 0, Vector2i(rng.randi_range(0, 7), 2))
+			obstacles[pos] = true
+
+func one_way_platform(room_x, room_y, local_x, local_y, probability):
+	var chance = 1.0
+	var max_height = room_size - 1 - MAX_LAYERS - 3
+	var x = room_x * room_size + local_x
+	var y = room_y * room_size + local_y
+	var grow
+	if local_x > room_size/2:
+		grow = -1
+	else:
+		grow = 1
+	for i in range(room_size - max_height):
+		if i > 2:
+			chance = 1.0 - probability
+		var pos = Vector2i(x, y)
+		if rng.randf() > chance or obstacles.has(pos):
+			break
+		set_cell(0, pos, 0, Vector2i(0, 3))
+		obstacles[pos] = true
+		x += grow
+		
+func one_way_platform_low(room_x, room_y, probability):
+	var max_height = room_size - 1 - MAX_LAYERS - 3
+	var local_x = random_platform_x()
+	var local_y = rng.randi_range(MAX_LAYERS + 2, room_size - 3 - MAX_LAYERS)
+	if rng.randf() < 0.5:   # extra chance to land in the 50%-35% height band
+		local_y = rng.randi_range(roundi(lerpf(max_height, room_size - 1 - max_height, 0.35)), roundi(lerpf(max_height, room_size - 1 - max_height, 0.5)))
+	one_way_platform(room_x, room_y, local_x, local_y, probability)
+
+func one_way_platform_high(room_x, room_y, probability):
+	var max_height = room_size - 1 - MAX_LAYERS - 3
+	var local_x = random_platform_x()
+	var local_y = rng.randi_range(MAX_LAYERS + 2, room_size - 3 - MAX_LAYERS)
+	if rng.randf() < 0.5:   # extra chance to land in the 50%-35% height band
+		local_y = rng.randi_range(room_size - 1 - max_height, roundi(lerpf(max_height, room_size - 1 - max_height, 0.65)))
+	one_way_platform(room_x, room_y, local_x, local_y, probability)
+	
+func one_way_platform_symetrical_low(room_x, room_y, probability):
+	var max_height = room_size - 1 - MAX_LAYERS - 3
+	var local_y = rng.randi_range(MAX_LAYERS + 2, room_size - 3 - MAX_LAYERS)
+	var offset = 0.4
+	if rng.randf() < 0.5:   # extra chance to land in the 50%-35% height band
+		local_y = rng.randi_range(roundi(lerpf(max_height, room_size - 1 - max_height, 0.35)), roundi(lerpf(max_height, room_size - 1 - max_height, 0.5)))
+	# Left platform: starts between the left wall and 35%
+	var left_x = rng.randi_range(
+		MAX_LAYERS + 1,
+		roundi(room_size * 0.35)
+	)
+	# Right platform: starts between the center and 65%
+	var right_x = rng.randi_range(
+		roundi(room_size * 0.85),
+		room_size - 2 - MAX_LAYERS
+	)
+	one_way_platform(room_x, room_y, left_x, local_y, probability + offset)
+	one_way_platform(room_x, room_y, right_x, local_y, probability + offset)
+
+func one_way_platform_symetrical_high(room_x, room_y, probability):
+	var max_height = room_size - 1 - MAX_LAYERS - 3
+	var local_y = rng.randi_range(MAX_LAYERS + 2, room_size - 3 - MAX_LAYERS)
+	var offset = 0.4
+	if rng.randf() < 0.5:   # extra chance to land in the 50%-35% height band
+		local_y = rng.randi_range(room_size - 1 - max_height, roundi(lerpf(max_height, room_size - 1 - max_height, 0.65)))
+	var left_x = rng.randi_range(
+		MAX_LAYERS + 1,
+		roundi(room_size * 0.35)
+	)
+	# Right platform: starts between the center and 65%
+	var right_x = rng.randi_range(
+		roundi(room_size * 0.85),
+		room_size - 2 - MAX_LAYERS
+	)
+	one_way_platform(room_x, room_y, left_x, local_y, probability + offset)
+	one_way_platform(room_x, room_y, right_x, local_y, probability + offset)
+
+func one_way_platform_symetrical_vertical(room_x, room_y, probability):
+	var max_height = room_size - 1 - MAX_LAYERS - 3
+	# lower platform: always below 50% height
+	var half_y = roundi(lerpf(max_height, room_size - 1 - max_height, 0.5))
+	var lower_y = rng.randi_range(half_y, max_height)
+	# upper platform: 2 or 3 levels higher (smaller y), same x
+	var upper_y = maxi(lower_y - rng.randi_range(2, 3), MAX_LAYERS + 2)
+	var local_x = random_platform_x()
+	one_way_platform(room_x, room_y, local_x, lower_y, probability)
+	one_way_platform(room_x, room_y, local_x, upper_y, probability)
+
+func floating_island(room_x, room_y, probability):
+	var max_height = room_size - 1 - MAX_LAYERS - 3
+	var local_y = rng.randi_range(MAX_LAYERS + 2, max_height - 2)
+	var min_local_x = MAX_LAYERS + 2
+	var max_local_x = room_size - 1 - MAX_LAYERS - 2
+	var middle_x = floori(room_size * 0.5)
+	var local_x
+	if rng.randf() < 0.5:
+		local_x = rng.randi_range(min_local_x, mini(middle_x, max_local_x - 4))
+	else:
+		local_x = rng.randi_range(maxi(middle_x + 1, min_local_x + 4), max_local_x)
+	var y
+	var x = room_x * room_size + local_x
+	var grow
+	var chance
+	var not_drawn
+	if local_x > room_size/2:
+		grow = -1
+	else:
+		grow = 1
+	var lim_x = room_size - 1 - MAX_LAYERS - 2 - local_x if grow == 1 else local_x - MAX_LAYERS - 2
+	var center = floori(float(lim_x) / 2.0)
+	var base_y = room_y * room_size + local_y
+	#first pos
+	"""if not obstacles.has(Vector2i(x, base_y)):
+		set_cell(0, Vector2i(x, base_y), 0, Vector2i(rng.randi_range(0, 7), 2))
+		obstacles[Vector2i(x, base_y)] = true
+	#las pos
+	if not obstacles.has(Vector2i(x + grow * lim_x, base_y)):
+		set_cell(0, Vector2i(x + grow * lim_x, base_y), 0, Vector2i(rng.randi_range(0, 7), 2))
+		obstacles[Vector2i(x + grow * lim_x, base_y)] = true
+	x += grow"""
+	for i in range(0, lim_x + 1):
+		y = room_y * room_size + local_y
+		not_drawn = 0
+		var distance = absi(i - center)
+		for j in range(max_height - local_y + 1):
+			# chance to keep the tile: drops with distance from the middle column and with each row below the 2nd
+			if distance == 0 and j < 3:
+				chance = 1.0
+			elif distance <= 1 and j < 2:
+				chance = 1.0
+			else:
+				chance = 1.0 - probability - 0.1 * distance - 0.1 * maxi(j - 1, 0)
+				if not_drawn >= 2:
+					chance += chance * 0.5
+					not_drawn = 0
+			var pos = Vector2i(x, y)
+			if obstacles.has(pos):
+				break
+			if j == 0 and i < mini(2, lim_x): #i want at least 4 blocks, so 2 + the 2 already drawn before the loops.
+				chance = 1.0
+			if rng.randf() > chance and j != 0:
+				not_drawn += 1
+				continue
+			set_cell(0, pos, 0, Vector2i(rng.randi_range(0, 7), 2))
+			obstacles[pos] = true
+			y += 1
+		x += grow
+	
+func random_platform_x() -> int:
+	if rng.randf() < 0.5:
+		return rng.randi_range(MAX_LAYERS + 1, roundi(room_size * 0.4))
+	return rng.randi_range(roundi(room_size * 0.60), room_size - 2 - MAX_LAYERS)
+
+func draw_one_of_kind_obstacle(cell, connection_above, connection_below, above, below, connection_left, connection_right, left, right, x, y):
+	var choose = rng.randi_range(0, 4)
+	if choose == 0 and not connection_above and not same_region(cell, above):
+		pillar(x, y, true, 0.25)
+	elif choose == 1 and not connection_below and not same_region(cell, below):
+		pillar(x, y, false, 0.25)
+	elif choose == 2 and not connection_left and not same_region(cell, left):
+		pillar_horizontal(x, y, true, 0.25)
+	elif choose == 3 and not connection_right and not same_region(cell, right):
+		pillar_horizontal(x, y, false, 0.25)
+	else:
+		floating_island(x, y, 0.3)
+
+func draw_multiple_of_kind_obstacle(x, y):
+	var other_obstacles = [
+		one_way_platform_symetrical_vertical, 
+		one_way_platform_symetrical_low,
+		one_way_platform_low,
+		one_way_platform_symetrical_high,
+		one_way_platform_high
+	]
+	var chosen = rng.randi_range(0, len(other_obstacles) - 1)
+	if chosen > 2:
+		chosen = rng.randi_range(0, len(other_obstacles) - 2)
+	other_obstacles[chosen].call(x, y, 0.25)

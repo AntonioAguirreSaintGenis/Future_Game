@@ -10,6 +10,7 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @export var jump_height: float
 @export var jump_time_to_peak: float
 @export var jump_time_to_descend: float
+@export var jump_release_multiplier: float = 2.5  # higher = shorter minimum hop
 
 @onready var jump_velocity: float = ((2.0 * jump_height)/jump_time_to_peak) * -1.0
 @onready var jump_gravity: float = ((-2.0 * jump_height)/(jump_time_to_peak*jump_time_to_peak)) * -1.0
@@ -24,7 +25,7 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var timer3 = $TimerMagic
 @onready var magic = get_parent().get_node("Spell_handler")
 @onready var spell_normal: String = "res://scenes/spells/fire.tscn"
-@onready var spell_big: String = "res://scenes/spells/laser+fire.tscn"
+@onready var spell_big: String = "res://scenes/spells/laser+spirit_bullet.tscn"
 #@onready var blood = $CPUParticles2D
 
 const COYOTE_TIME = 0.1
@@ -48,13 +49,16 @@ var can_be_hit = true
 var magic_timer = 0
 var ragebar_max_value = 6
 var manabar_max_value = 6
+var dropping_through = false
 
 func _ready():
 	hurtbox.monitorable = true
 	
 func _physics_process(delta):
 	if state != "dash":
-		if is_on_floor():
+		if dropping_through:
+			collision_mask = 2
+		elif is_on_floor():
 			collision_mask = 1 + 4
 		else:
 			collision_mask = 1
@@ -75,8 +79,12 @@ func _physics_process(delta):
 				else:
 					animated_sprite.offset.x = 3
 					animated_sprite.scale.x = 1
-					hitbox.scale.x = 1 
-			velocity.x = direction * SPEED
+					hitbox.scale.x = 1
+			#for bunny hop
+			if is_on_floor():
+				velocity.x = direction * SPEED
+			else:
+				velocity.x = move_toward(velocity.x, direction * SPEED, SPEED * delta * (0.5 if abs(velocity.x) > SPEED else 8))
 		else:
 			if col:
 				velocity.x = -col.get_normal().x * 10
@@ -116,10 +124,12 @@ func _physics_process(delta):
 				charge_jump()
 			if Input.is_action_just_released("jump"):
 				if timer_wall_and_jump < CHARGE_THRESHOLD:
-					velocity.y = jump_velocity
-					state = "jump"
-					animated_sprite.play("jump")
-					timer_wall_and_jump = 0.0
+					dropping_through = true
+					collision_layer = 2
+					collision_mask = 2
+					state = "fall"
+					animated_sprite.play("fall")
+					wall_jump = false
 				else:
 					velocity.y = jump_velocity * 1.5
 					state = "flying"
@@ -169,7 +179,7 @@ func _physics_process(delta):
 			state = "block"
 			priority = 0
 			block()
-	if priority > 1:
+	if priority > 1 or dashing or state == "dash":
 		if is_on_floor() or coyote_timer > 0.0:
 			if Input.is_action_just_pressed("jump"):
 				if Input.is_action_pressed("down"):
@@ -300,12 +310,18 @@ func idle():
 		animated_sprite.play("idle")
 	
 func get_gravity():
-	return jump_gravity if velocity.y < 0.0 else fall_gravity
+	if velocity.y < 0.0:  # rising
+		if not Input.is_action_pressed("jump"): # and variable_jump and
+			return jump_gravity * jump_release_multiplier
+		return jump_gravity
+	return fall_gravity
+	#return jump_gravity if velocity.y < 0.0 else fall_gravity
 		
 func _on_animated_sprite_2d_animation_finished():
 	hurtbox.collision_layer = 2
 	collision_layer = 1
 	collision_mask = 1
+	dropping_through = false
 	hurtbox.monitorable = true
 	if state == "dash":
 		state = "fall"
