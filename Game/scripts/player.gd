@@ -40,6 +40,7 @@ var state = "idle"
 var damage = 1
 var double_jump = false
 var wall_jump = false
+var dash_from_wall = false
 var dashing = false
 var priority = 4
 var col
@@ -162,6 +163,7 @@ func _physics_process(delta):
 			attack()
 		elif Input.is_action_just_pressed("dash"):
 			if not dashing:
+				dash_from_wall = (state == "wall")
 				state = "dash"
 				priority = 0
 				dash()
@@ -193,6 +195,9 @@ func _physics_process(delta):
 			if Input.is_action_just_pressed("jump"):
 				if state == "wall":
 					state = "wall_jump"
+					doWallJump()
+				elif state == "dash" and dash_from_wall:
+					state = "jump"
 					doWallJump()
 				elif double_jump == false:
 					state = "double_jump"
@@ -250,6 +255,9 @@ func doDouble_jump():
 		wall_jump = false
 		velocity.y = jump_velocity + 50
 		double_jump = true
+		# Cancel momentum if the player is steering the other way
+		if direction != 0 and sign(direction) != sign(velocity.x):
+			velocity.x = direction * SPEED
 		if is_on_wall():
 			animated_sprite.play("fall")
 		else:

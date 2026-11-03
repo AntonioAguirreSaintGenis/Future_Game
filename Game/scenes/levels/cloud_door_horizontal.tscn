@@ -1,0 +1,33 @@
+[gd_scene load_steps=5 format=3 uid="uid://lj8oxbqegpu5"]
+
+[ext_resource type="Texture2D" uid="uid://208jf3woma0" path="res://assets/sprites/cloud_door_horizontal.png" id="1_sv04c"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fbmu8"]
+atlas = ExtResource("1_sv04c")
+region = Rect2(0, 0, 160, 32)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_hrciv"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fbmu8")
+}],
+"loop": false,
+"name": &"horizontal",
+"speed": 1.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_jodsc"]
+size = Vector2(159, 15.5)
+
+[node name="Cloud_door_horizontal" type="StaticBody2D"]
+collision_layer = 0
+collision_mask = 0
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("SpriteFrames_hrciv")
+animation = &"horizontal"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0.5, 2.75)
+shape = SubResource("RectangleShape2D_jodsc")

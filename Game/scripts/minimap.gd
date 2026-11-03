@@ -38,11 +38,14 @@ func add_around(center: Vector2, size_rect: int):
 		return
 	var step = size_rect + 1
 	# every cell of the big room the player is in (or just this cell if it's a normal room)
-	var group
-	if world.big_rooms.has(current_room):
+	var region = world.region_map[current_room.y][current_room.x]
+	if region < 0 or not world.big_rooms.has(region):
+		return
+	var group: Array[Vector2i] = world.big_rooms[region]
+	"""if world.big_rooms.has(current_room):
 		group = world.big_rooms[current_room]
 	else:
-		group = [current_room]
+		group = [current_room]"""
 	for cell in group:
 		visited[cell] = true
 	# blue: rooms touching ANY cell of the group, excluding the group itself
