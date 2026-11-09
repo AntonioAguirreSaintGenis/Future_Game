@@ -9,7 +9,7 @@ enum States { IDLE, ATTACK, ATTACKING }
 @onready var timer = $Timer
 @onready var timer2 = $Timer2
 @onready var shot = "res://scenes/ennemies/enemy_3_shot.tscn"
-@onready var detection: CollisionShape2D = get_node_or_null("Detection/CollisionShape2D")
+@onready var detection: CollisionShape2D = $Detection/CollisionShape2D
 
 var rng = RandomNumberGenerator.new()
 var random_int
@@ -23,6 +23,10 @@ var can_be_hit = true
 var agro = false
 var start_state = States.ATTACK
 var offset
+var pos = Vector2i(-1, -1)
+var room_cell = Vector2i(-1, -1)
+var difficulty = 2
+var id
 
 var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 
@@ -96,10 +100,28 @@ func take_damage(damage):
 	can_be_hit = false
 	timer2.start(0.75)
 	health -= damage
-	print(health)
 	if health <= 0:
+		get_parent().delete_enemy(room_cell, id)
 		queue_free()
 
 func _on_timer_2_timeout():
 	can_be_hit = true
-	print(1)
+
+func set_pos(x, y, room_size, layers, new_id):
+	var half = room_size / 2
+	# a column on the left side, between the wall layers and just before the middle
+	var local_x = rng.randi_range(layers + 1, maxi(layers + 1, half/2))
+	if rng.randf() < 0.5:
+		local_x = room_size - 1 - local_x   # mirror it to the right side
+	# just above the deepest possible floor stack (wall row + `layers` layers)
+	var local_y = room_size - 2 - layers
+	room_cell = Vector2i(x, y)
+	pos = Vector2i(x * room_size + local_x, y * room_size + local_y)   # tile coordinate
+	id = new_id
+
+func generate():
+	var tilemap = get_parent()
+	position = tilemap.map_to_local(pos)
+
+func de_generate():
+	queue_free()

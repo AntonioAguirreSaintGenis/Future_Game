@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3 uid="uid://qlor68xe48ul"]
+[gd_scene load_steps=12 format=3 uid="uid://qlor68xe48ul"]
 
 [ext_resource type="Texture2D" uid="uid://dxqompdm1ro6k" path="res://assets/sprites/tile_map_test.png" id="1_mf08d"]
 [ext_resource type="PackedScene" uid="uid://8imc11ynqept" path="res://scenes/player/player.tscn" id="3_lvqb6"]
@@ -8,6 +8,7 @@
 [ext_resource type="PackedScene" uid="uid://c6bmdn5r26sss" path="res://scenes/player/healthbar_layout.tscn" id="6_obi0d"]
 [ext_resource type="PackedScene" uid="uid://cf4jwm2nsfmvx" path="res://scenes/bosses/boss_barr.tscn" id="7_38k2m"]
 [ext_resource type="PackedScene" uid="uid://cc0l0n7sblf3u" path="res://scenes/minimap.tscn" id="8_b7nyk"]
+[ext_resource type="PackedScene" uid="uid://nrjom7x62676" path="res://scenes/spells/spell_handler.tscn" id="9_whlna"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_p58fo"]
 texture = ExtResource("1_mf08d")
@@ -1689,9 +1690,10 @@ texture = ExtResource("1_mf08d")
 2:14/0/physics_layer_1/angular_velocity = 0.0
 
 [sub_resource type="TileSet" id="TileSet_2guhv"]
-physics_layer_0/collision_layer = 255
+physics_layer_0/collision_layer = 251
 physics_layer_0/collision_mask = 255
-physics_layer_1/collision_layer = 5
+physics_layer_1/collision_layer = 1
+physics_layer_1/collision_mask = 5
 terrain_set_0/mode = 0
 terrain_set_0/terrain_0/name = "Terrain 0"
 terrain_set_0/terrain_0/color = Color(0.5, 0.34375, 0.25, 1)
@@ -1729,3 +1731,5 @@ offset_bottom = -180.5
 offset_left = 113.0
 offset_right = 143.0
 scale = Vector2(0.5, 0.5)
+
+[node name="Spell_handler" parent="." instance=ExtResource("9_whlna")]

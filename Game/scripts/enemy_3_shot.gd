@@ -9,6 +9,7 @@ extends Area2D
 
 const SPEED = 120
 const DAMAGE = 1
+const MUZZLE_OFFSET := Vector2(10, -14)
 
 var start = false
 var direction = 0
@@ -16,11 +17,11 @@ var target
 var angle := 0.0
 
 func _ready():
-	direction = get_parent().direction
-	global_position.y = get_parent().position.y - 14
-	global_position.x = get_parent().position.x - 10 * -direction
+	var enemy = get_parent()
+	direction = enemy.direction
+	target = enemy.target
+	position = Vector2(MUZZLE_OFFSET.x * direction, MUZZLE_OFFSET.y)
 	animated_sprite.play("idle")
-	target = get_parent().target
 
 func _physics_process(delta):
 	if start:
@@ -28,13 +29,16 @@ func _physics_process(delta):
 	elif animated_sprite.animation != "collide":
 		direction = get_parent().direction
 		animated_sprite.flip_h = direction > 0
-		global_position.x = get_parent().position.x - 10 * -direction
+		position.x = MUZZLE_OFFSET.x * direction
 	
 # Called every frame. 'delta' is the elapsed time since the previous frame.
 func _process(delta):
 	hitbox.hit(DAMAGE)
 
 func start_shot():
+	var gp = global_position
+	top_level = true          # ignore the parent's transform from now on
+	global_position = gp
 	start = true
 	direction = get_parent().direction
 	angle = 0.0
@@ -60,17 +64,8 @@ func attack(delta):
 	global_position += Vector2(cos(angle) * direction, sin(angle)) * SPEED * delta
 	rotation = angle * direction
 
-func _on_area_entered(area):
-	pass
-	"""if area.get_parent() != get_parent() and area != hitbox:
-		start = false
-		timer.start(0.4)
-		animated_sprite.play("collide")
-		await timer.timeout
-		queue_free()"""
-
 func _on_body_entered(body):
-	if body != get_parent():
+	if body != get_parent() and start != false:
 		start = false
 		timer.start(0.4)
 		animated_sprite.play("collide")

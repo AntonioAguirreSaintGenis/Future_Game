@@ -1,7 +1,8 @@
-[gd_scene load_steps=59 format=3 uid="uid://cb5jmntf43qf0"]
+[gd_scene load_steps=61 format=3 uid="uid://cb5jmntf43qf0"]
 
 [ext_resource type="Script" path="res://scripts/enemy_3.gd" id="1_y72ux"]
 [ext_resource type="Texture2D" uid="uid://b2n2q8malj4vf" path="res://assets/sprites/enemies/ennemy3_spritesheet.png" id="2_n8dc6"]
+[ext_resource type="PackedScene" uid="uid://un03fny78qd6" path="res://scenes/detection.tscn" id="3_wiot4"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_6fm3x"]
 atlas = ExtResource("2_n8dc6")
@@ -409,6 +410,9 @@ height = 36.0
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_7l1lo"]
 size = Vector2(16, 28)
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_442xe"]
+radius = 177.553
+
 [node name="enemy3" type="CharacterBody2D"]
 collision_layer = 4
 collision_mask = 8
@@ -424,14 +428,22 @@ offset = Vector2(4, 0)
 [node name="Timer2" type="Timer" parent="."]
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
 shape = SubResource("CapsuleShape2D_2fw3v")
 
 [node name="Hurtbox" type="Area2D" parent="."]
+visible = false
 collision_layer = 4
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 shape = SubResource("RectangleShape2D_7l1lo")
 debug_color = Color(1, 0, 0, 0.419608)
+
+[node name="Detection" parent="." instance=ExtResource("3_wiot4")]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Detection"]
+shape = SubResource("CircleShape2D_442xe")
+debug_color = Color(0, 1, 0, 0.419608)
 
 [connection signal="timeout" from="Timer2" to="." method="_on_timer_2_timeout"]

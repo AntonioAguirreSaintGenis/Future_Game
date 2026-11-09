@@ -26,6 +26,7 @@ var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 @onready var magic = get_parent().get_node("Spell_handler")
 @onready var spell_normal: String = "res://scenes/spells/fire.tscn"
 @onready var spell_big: String = "res://scenes/spells/laser+spirit_bullet.tscn"
+@onready var enemy_bumper: Area2D = $EnemyBumper
 #@onready var blood = $CPUParticles2D
 
 const COYOTE_TIME = 0.1
@@ -60,13 +61,17 @@ func _physics_process(delta):
 		if dropping_through:
 			collision_mask = 2
 		elif is_on_floor():
-			collision_mask = 1 + 4
+			collision_mask = 1
 		else:
 			collision_mask = 1
 	if is_on_floor():
 		coyote_timer = COYOTE_TIME
 	else:
 		coyote_timer = max(coyote_timer - delta, 0.0)
+	
+	if state == "attack":
+		if animated_sprite.frame > 2:
+			hitbox.hit(damage)
 	
 	#x velocity
 	direction = Input.get_axis("move_left", "move_right")
@@ -126,8 +131,8 @@ func _physics_process(delta):
 			if Input.is_action_just_released("jump"):
 				if timer_wall_and_jump < CHARGE_THRESHOLD:
 					dropping_through = true
-					collision_layer = 2
-					collision_mask = 2
+					#collision_layer = 2
+					#collision_mask = 2
 					state = "fall"
 					animated_sprite.play("fall")
 					wall_jump = false
@@ -222,7 +227,8 @@ func _physics_process(delta):
 			state = "idle"
 			priority = 4
 			idle()
-	
+
+	block_enemies_horizontally()
 	move_and_slide()
 	
 	if is_on_floor():
@@ -232,7 +238,6 @@ func _physics_process(delta):
 		dashing = false
 
 func attack():
-	hitbox.hit(damage)
 	animated_sprite.play("attack")
 func block():
 	can_be_hit = false
@@ -355,3 +360,12 @@ func _on_timer_2_timeout():
 
 func _on_timer_magic_timeout():
 	magic_timer += 0.5
+
+func block_enemies_horizontally():
+	if state == "dash":  # dash phases through enemies
+		return
+	for body in enemy_bumper.get_overlapping_bodies():
+		var side = signf(body.global_position.x - global_position.x)
+		# only cancel movement *toward* the enemy
+		if side != 0.0 and signf(velocity.x) == side:
+			velocity.x = 0.0

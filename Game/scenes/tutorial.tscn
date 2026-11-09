@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://cdrx2syyg2vda"]
+[gd_scene load_steps=16 format=3 uid="uid://cdrx2syyg2vda"]
 
 [ext_resource type="Texture2D" uid="uid://b58ocgxm74ng1" path="res://assets/sprites/map1_sprite_sheet.png" id="1_pylhj"]
 [ext_resource type="PackedScene" uid="uid://c1dj74ph6tnta" path="res://scenes/damagezone.tscn" id="2_c6m1y"]
@@ -8,11 +8,9 @@
 [ext_resource type="PackedScene" uid="uid://c6bmdn5r26sss" path="res://scenes/player/healthbar_layout.tscn" id="6_y6vvb"]
 [ext_resource type="PackedScene" uid="uid://cf4jwm2nsfmvx" path="res://scenes/bosses/boss_barr.tscn" id="7_4jnul"]
 [ext_resource type="PackedScene" uid="uid://dcr6qarm4ov62" path="res://scenes/ennemies/enemy1.tscn" id="7_jpboy"]
-[ext_resource type="PackedScene" uid="uid://un03fny78qd6" path="res://scenes/detection.tscn" id="8_ct6rh"]
 [ext_resource type="PackedScene" uid="uid://bydaos34d612f" path="res://scenes/ennemies/enemy_2.tscn" id="8_n6tbs"]
 [ext_resource type="PackedScene" uid="uid://c5pqqal3hkir7" path="res://scenes/levels/boss1_room1.tscn" id="11_7o7b5"]
 [ext_resource type="PackedScene" uid="uid://nrjom7x62676" path="res://scenes/spells/spell_handler.tscn" id="12_1sdv3"]
-[ext_resource type="PackedScene" uid="uid://cb5jmntf43qf0" path="res://scenes/ennemies/enemy_3.tscn" id="13_iumta"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_3n1ul"]
 texture = ExtResource("1_pylhj")
@@ -321,21 +319,6 @@ size = Vector2(10, 45)
 
 [sub_resource type="WorldBoundaryShape2D" id="WorldBoundaryShape2D_48vw6"]
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_qhxpb"]
-radius = 81.8841
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_343yp"]
-radius = 165.723
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_q5i62"]
-radius = 86.0
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_j5ixy"]
-radius = 170.188
-
-[sub_resource type="CircleShape2D" id="CircleShape2D_uijwv"]
-radius = 179.402
-
 [node name="Game" type="Node2D"]
 
 [node name="TileMap" type="TileMap" parent="."]
@@ -381,46 +364,21 @@ offset_right = 61.48
 offset_bottom = 24.5333
 
 [node name="Enemy1" parent="." instance=ExtResource("7_jpboy")]
+visible = false
 position = Vector2(909, -21)
 
-[node name="Detection" parent="Enemy1" instance=ExtResource("8_ct6rh")]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy1/Detection"]
-shape = SubResource("CircleShape2D_qhxpb")
-
 [node name="Enemy2" parent="." instance=ExtResource("8_n6tbs")]
+visible = false
 position = Vector2(1308, -100)
 
-[node name="Detection" parent="Enemy2" instance=ExtResource("8_ct6rh")]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy2/Detection"]
-shape = SubResource("CircleShape2D_343yp")
-
 [node name="Enemy3" parent="." instance=ExtResource("7_jpboy")]
+visible = false
 position = Vector2(1345, -20)
-
-[node name="Detection" parent="Enemy3" instance=ExtResource("8_ct6rh")]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy3/Detection"]
-shape = SubResource("CircleShape2D_q5i62")
 
 [node name="Enemy4" parent="." instance=ExtResource("8_n6tbs")]
 position = Vector2(1372, -101)
-
-[node name="Detection" parent="Enemy4" instance=ExtResource("8_ct6rh")]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy4/Detection"]
-shape = SubResource("CircleShape2D_j5ixy")
 
 [node name="BossRoom" parent="." instance=ExtResource("11_7o7b5")]
 position = Vector2(1744, 0)
 
 [node name="Spell_handler" parent="." instance=ExtResource("12_1sdv3")]
-
-[node name="Enemy5" parent="." instance=ExtResource("13_iumta")]
-position = Vector2(285, -25)
-
-[node name="Detection" parent="Enemy5" instance=ExtResource("8_ct6rh")]
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Enemy5/Detection"]
-shape = SubResource("CircleShape2D_uijwv")

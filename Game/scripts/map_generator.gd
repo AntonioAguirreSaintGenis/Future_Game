@@ -22,6 +22,9 @@ const CAM_TRANSITION_TIME = 0.7
 const ROOM_DOOR_VERTICAL = "res://scenes/levels/cloud_door_vertical.tscn"
 const ROOM_DOOR_HORIZONTAL = "res://scenes/levels/cloud_door_horizontal.tscn"
 
+const MAX_DIFFICULTY = 6
+
+const DOOR_SPAWN_MARGIN = 1   # tiles the player must be inside the room before its doors close
 var obstacles = {}
 var CARDINAL = ["NORTH", "SOUTH", "EAST", "WEST"]
 var map = [] #the main matrix, where rooms will be placed.
@@ -56,7 +59,12 @@ var pending: Array[Vector2i] = []   # terrain cells collected while one room is 
 var gen_queue = []                  # rooms waiting to be generated, current room first
 var unload_queue = []               # far rooms waiting to be erased
 var world_seed = 0
-
+var enemies_generated = {}
+var enemies_id = 0
+var enemies_list = ["res://scenes/ennemies/enemy1.tscn", "res://scenes/ennemies/enemy_2.tscn", "res://scenes/ennemies/enemy_3.tscn"]
+var doors_pending = false
+var enemies_pending = false
+var door_cell = Vector2i(-1, -1)
 
 func _ready():
 	rng.randomize()
@@ -102,10 +110,15 @@ func _ready():
 				drunkards[i][0] -= 1
 			elif direction == "EAST" and drunkards[i][0] < WIDTH-1:
 				drunkards[i][0] += 1
-	var candidates = flood_fill_zones(map, visited)
+	var forced_start = force_single_room_start()
+	var candidates = flood_fill_zones(map, visited, forced_start)
 	compute_region_bounds()
 	var group_edges = candidates[1]
 	player.position = map_to_local(Vector2(candidates[2][0] * room_size + MAX_LAYERS, candidates[2][1] * room_size + MAX_LAYERS))
+	var start_cell = Vector2i(candidates[2][0], candidates[2][1])
+	var region_id = region_map[start_cell.y][start_cell.x]
+	for room in big_rooms[region_id]:
+		cleared[room] = true
 	candidates = candidates[0]
 	doors = randomized_kruskal(map, group_edges)
 	#var edges = zone_edges()
@@ -130,6 +143,10 @@ func _process(_delta):
 	# erase at most one far room per frame, and only when nothing is waiting to be built
 	if gen_queue.is_empty() and not unload_queue.is_empty():
 		var room = unload_queue.pop_front()
+		for en in enemies_generated.get(room, {}).values():
+			if is_instance_valid(en):
+				en.queue_free()
+		enemies_generated.erase(room)
 		for ty in range(room_size):
 			for tx in range(room_size):
 				erase_cell(0, Vector2i(room.x * room_size + tx, room.y * room_size + ty))
@@ -149,8 +166,27 @@ func _physics_process(_delta):
 				if is_instance_valid(door):
 					door.queue_free()
 			current_doors.clear()
-			update_current_doors(cell)
+			door_cell = cell
+			doors_pending = true
 		update_rooms(cell.x, cell.y, zone_map[cell.y][cell.x])
+		enemies_pending = true
+	if enemies_pending and created.has(cell) and is_inside_room(door_cell):
+		enemies_pending = false
+		generate_enemies(cell.x, cell.y)
+	#if no enemmies left open the room
+	if not cleared.has(cell) and enemies_generated.has(cell) and enemies_generated[cell].is_empty():
+		var region_id = region_map[cell.y][cell.x]
+		for room in big_rooms[region_id]:
+			cleared[room] = true
+		for door in current_doors:
+			if is_instance_valid(door):
+				door.queue_free()
+		current_doors.clear()
+		update_current_doors(cell)
+	#close the doors behind the player
+	if doors_pending and is_inside_room(door_cell):
+		doors_pending = false
+		update_current_doors(door_cell)
 
 func get_room_of(global_pos: Vector2) -> Vector2i:
 	var tile = local_to_map(to_local(global_pos))
@@ -187,7 +223,7 @@ func apply_zones_to_tiles(candidates, T):
 		var zone = zone_map[i[1]][i[0]]
 		create_room(i[0], i[1], zone_map[i[1]][i[0]], room_size, T)
 				
-func flood_fill_zones(map, visited_original):
+func flood_fill_zones(map, visited_original, start_cell):
 	#This functions gives a zone to each (x, y) position in the map that
 	#is not 0.
 	var zone_sizes = [] #the size of each zone.
@@ -260,16 +296,24 @@ func flood_fill_zones(map, visited_original):
 			groups_edges.append(edges)
 			region_cells.append(queue) #queue now holds every cell of this region.
 			big_rooms[next_region - 1] = queue
-
+	
+	#candidates.erase([start_cell.x, start_cell.y])
 	candidates.shuffle()
 	var target_per_zone = int(HEIGHT * WIDTH / NB_ZONES)
 	#number of rooms we want for each zone
 	var region_zone = [] #which zone owns each region, -1 if unclaimed.
 	for r in range(region_cells.size()):
 		region_zone.append(-1)
-
+	zone_0 = [start_cell.x, start_cell.y]
+	region = region_map[start_cell.y][start_cell.x]
+	region_zone[region] = 0
+	for cell in region_cells[region]:
+		zone_map[cell.y][cell.x] = 0
+		zone_queues[0].append(cell)
+	zone_sizes[0] = region_cells[region].size()
+	
 	var seed_idx = 0
-	for i in range(NB_ZONES):
+	for i in range(1, NB_ZONES):
 		#starting point of our zones. Skip candidates whose region
 		#was already claimed by an earlier zone seed.
 		while seed_idx < candidates.size() and region_zone[region_map[candidates[seed_idx][1]][candidates[seed_idx][0]]] != -1:
@@ -286,8 +330,6 @@ func flood_fill_zones(map, visited_original):
 			zone_map[cell.y][cell.x] = i
 			zone_queues[i].append(cell)
 		zone_sizes[i] = region_cells[region].size()
-		if i == 0:
-			zone_0 = [x, y]
 
 	var active = true
 	#we iterate trough each zone respecting each zone quota until there
@@ -375,6 +417,13 @@ func is_room_boundary(cell: Vector2i, neighbor: Vector2i, zone: int) -> bool:
 	if neighbor.x < 0 or neighbor.x >= WIDTH or neighbor.y < 0 or neighbor.y >= HEIGHT:
 		return true
 	return map[neighbor.y][neighbor.x] != map[cell.y][cell.x] or zone_map[neighbor.y][neighbor.x] != zone
+
+func is_inside_room(cell: Vector2i) -> bool:
+	var tile = local_to_map(to_local(player.global_position))
+	var lx = tile.x - cell.x * room_size
+	var ly = tile.y - cell.y * room_size
+	return lx >= DOOR_SPAWN_MARGIN and lx < room_size - DOOR_SPAWN_MARGIN \
+		and ly >= DOOR_SPAWN_MARGIN and ly < room_size - DOOR_SPAWN_MARGIN
 	
 func draw_wall(cell: Vector2i, dir: Vector2i, zone: int, size: int, with_door: bool) -> void:
 	var start = cell * size + Vector2i(maxi(dir.x, 0), maxi(dir.y, 0)) * (size - 1)
@@ -847,22 +896,69 @@ func update_current_doors(cell: Vector2i) -> void:
 	# Don't create doors if this room has already been cleared.
 	if cleared.has(cell):
 		return
+	var region_id = region_map[cell.y][cell.x]
+	if region_id == -1 or not big_rooms.has(region_id):
+		return
+	var rooms = big_rooms[region_id]
 	var tile_size_px = Vector2(tile_set.tile_size)
 	var door_first = room_size / 4
-	for dir in SIDES:
-		var neighbor = cell + dir
-		if not has_open_connection(doors, cell, neighbor):
-			continue
-		# Choose the correct door scene based on the wall orientation.
-		var door: StaticBody2D
-		if dir.y != 0:
-			door = load(ROOM_DOOR_HORIZONTAL).instantiate() as StaticBody2D
+	for room in rooms:
+		for dir in SIDES:
+			var neighbor = room + dir
+			if not has_open_connection(doors, room, neighbor):
+				continue
+			# Choose the correct door scene based on wall orientation.
+			var door: StaticBody2D
+			if dir.y != 0:
+				door = load(ROOM_DOOR_HORIZONTAL).instantiate() as StaticBody2D
+			else:
+				door = load(ROOM_DOOR_VERTICAL).instantiate() as StaticBody2D
+			# Calculate the position of the doorway.
+			var start = room * room_size + Vector2i(maxi(dir.x, 0), maxi(dir.y, 0)) * (room_size - 1)
+			var step = Vector2i(absi(dir.y), absi(dir.x))
+			add_child(door)
+			door.position = map_to_local(start + step * door_first) \
+				+ Vector2(step) * tile_size_px * 4.5
+			current_doors.append(door)
+
+func generate_enemies(x, y):
+	var pos = Vector2i(x, y)
+	if cleared.has(pos):
+		return   # don't respawn enemies in a room that was already cleared
+	if not enemies_generated.get(pos, {}).is_empty():
+		return   # enemies still alive here, don't touch anything
+	rng.seed = hash([world_seed, x, y])
+	var tries = 10
+	var actual_difficulty = 0
+	var difficulty = rng.randi_range(MAX_DIFFICULTY/2, MAX_DIFFICULTY)
+	enemies_generated[pos] = {}
+	for i in range(tries):
+		var en = load(enemies_list[rng.randi_range(0, len(enemies_list) - 1)])
+		en = en.instantiate()
+		if actual_difficulty + en.difficulty <= difficulty:
+			enemies_generated[pos][enemies_id] = en
+			add_child(en)
+			en.set_pos(x, y, room_size, MAX_LAYERS, enemies_id)
+			en.generate()
+			actual_difficulty += en.difficulty
+			enemies_id += 1
 		else:
-			door = load(ROOM_DOOR_VERTICAL).instantiate() as StaticBody2D
-		# Calculate the position of the doorway.
-		var start = cell * room_size + Vector2i(maxi(dir.x, 0), maxi(dir.y, 0)) * (room_size - 1)
-		var step = Vector2i(absi(dir.y), absi(dir.x))
-		add_child(door)
-		door.position = map_to_local(start + step * door_first) \
-			+ Vector2(step) * tile_size_px * 4.5
-		current_doors.append(door)
+			en.queue_free()
+
+func delete_enemy(pos, id):
+	if enemies_generated.has(pos):
+		enemies_generated[pos].erase(id)
+
+func force_single_room_start() -> Vector2i:
+	# Pick a random room and give it a value no other cell has, so the flood
+	# fill can never merge it with its neighbours into a big room.
+	var rooms: Array[Vector2i] = []
+	var highest = 0
+	for y in range(HEIGHT):
+		for x in range(WIDTH):
+			if map[y][x] > 0:
+				rooms.append(Vector2i(x, y))
+				highest = maxi(highest, map[y][x])
+	var start = rooms[rng.randi_range(0, rooms.size() - 1)]
+	map[start.y][start.x] = highest + 1
+	return start

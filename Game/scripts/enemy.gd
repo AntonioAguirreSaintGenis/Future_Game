@@ -9,6 +9,8 @@ enum States { IDLE, MOVE, ATTACK1, ATTACK2, CHOOSE_ATTACK }
 @onready var hurtbox = $Hurtbox_enemy1
 @onready var collision = $CollisionShape2D
 @onready var timer2 = $Timer2
+@onready var feet = $Feet
+@onready var body = $Body
 
 var rng = RandomNumberGenerator.new()
 var random_int
@@ -21,24 +23,38 @@ var direction
 var can_be_hit = true
 var agro = false
 var start_state = States.MOVE
+var pos = Vector2i(-1, -1)
+var room_cell = Vector2i(-1, -1)
+var difficulty = 1
+var id
+
+var gravity = ProjectSettings.get_setting("physics/2d/default_gravity")
 
 func _ready():
 	rng.randomize()
 	random_int = rng.randi_range(1, 3)
 	
 func _physics_process(delta):
+	if not is_on_floor():
+		velocity.y += gravity * delta
 	direction = target.position.x - position.x
 	if state == States.MOVE:
 		if abs(direction) > 20:
 			velocity.x = sign(direction) * speed
 		else:
 			state = States.CHOOSE_ATTACK
+		if feet.is_colliding() and not body.is_colliding():
+			velocity.y = -5
+		else:
+			velocity.y = 0
 		direction = sign(direction)
 		animated_sprite.play("idle")
 		animated_sprite.flip_h = direction > 0
 		animated_sprite.offset.x = direction * 5
 		hitbox1.scale.x = -direction
 		hitbox2.scale.x = -direction
+		feet.scale.x = -direction
+		body.scale.x = -direction
 	else:
 		velocity.x = 0
 		if state == States.CHOOSE_ATTACK:
@@ -91,6 +107,7 @@ func take_damage(damage):
 	timer2.start(1)
 	health -= damage
 	if health <= 0:
+		get_parent().delete_enemy(room_cell, id)
 		queue_free()
 
 func _on_timer_2_timeout():
@@ -100,3 +117,22 @@ func _on_detection_body_entered(body):
 	if body == target and agro == false:
 		state = States.MOVE
 		agro = true # Replace with function body.
+
+func set_pos(x, y, room_size, layers, new_id):
+	var half = room_size / 2
+	# a column on the left side, between the wall layers and just before the middle
+	var local_x = rng.randi_range(layers + 1, maxi(layers + 1, half - 3))
+	if rng.randf() < 0.5:
+		local_x = room_size - 1 - local_x   # mirror it to the right side
+	# just above the deepest possible floor stack (wall row + `layers` layers)
+	var local_y = room_size - layers - 2
+	room_cell = Vector2i(x, y)
+	pos = Vector2i(x * room_size + local_x, y * room_size + local_y)   # tile coordinate
+	id = new_id
+
+func generate():
+	var tilemap = get_parent()
+	position = tilemap.map_to_local(pos)
+
+func de_generate():
+	queue_free()

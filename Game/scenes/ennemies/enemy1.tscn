@@ -1,8 +1,9 @@
-[gd_scene load_steps=42 format=3 uid="uid://dcr6qarm4ov62"]
+[gd_scene load_steps=44 format=3 uid="uid://dcr6qarm4ov62"]
 
 [ext_resource type="Texture2D" uid="uid://cv5h2pingo0ua" path="res://assets/sprites/enemies/enemigo-1_sprite_sheet.png" id="1_6juj8"]
 [ext_resource type="Script" path="res://scripts/enemy.gd" id="1_c1npq"]
 [ext_resource type="PackedScene" uid="uid://bj5nf3j55pidt" path="res://scenes/hitbox.tscn" id="3_l8bl2"]
+[ext_resource type="PackedScene" uid="uid://un03fny78qd6" path="res://scenes/detection.tscn" id="4_i746p"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_bshli"]
 atlas = ExtResource("1_6juj8")
@@ -274,6 +275,9 @@ size = Vector2(17, 13)
 [sub_resource type="SegmentShape2D" id="SegmentShape2D_7joou"]
 b = Vector2(-17, 0)
 
+[sub_resource type="CircleShape2D" id="CircleShape2D_b0ikg"]
+radius = 78.0
+
 [node name="Enemy1" type="CharacterBody2D"]
 collision_layer = 4
 collision_mask = 8
@@ -289,12 +293,16 @@ offset = Vector2(-5, 0)
 script = SubResource("GDScript_004n0")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
 shape = SubResource("CapsuleShape2D_aqefg")
 
-[node name="RayCast2D" type="RayCast2D" parent="."]
-target_position = Vector2(-96, 0)
+[node name="Body" type="RayCast2D" parent="."]
+position = Vector2(0, -4)
+target_position = Vector2(-17, 0)
+collision_mask = 8
 
 [node name="Hurtbox_enemy1" type="Area2D" parent="."]
+visible = false
 collision_layer = 4
 collision_mask = 0
 monitoring = false
@@ -305,6 +313,7 @@ shape = SubResource("CapsuleShape2D_bkfo8")
 debug_color = Color(1, 0, 0, 0.419608)
 
 [node name="Hitbox1" parent="." instance=ExtResource("3_l8bl2")]
+visible = false
 collision_layer = 0
 collision_mask = 2
 monitorable = false
@@ -315,6 +324,7 @@ shape = SubResource("RectangleShape2D_xyig2")
 debug_color = Color(0, 0, 1, 0.419608)
 
 [node name="Hitbox2" parent="." instance=ExtResource("3_l8bl2")]
+visible = false
 collision_layer = 0
 collision_mask = 2
 monitorable = false
@@ -325,5 +335,18 @@ shape = SubResource("SegmentShape2D_7joou")
 debug_color = Color(0, 0, 1, 0.419608)
 
 [node name="Timer2" type="Timer" parent="."]
+
+[node name="Detection" parent="." instance=ExtResource("4_i746p")]
+visible = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Detection"]
+position = Vector2(0, 9)
+shape = SubResource("CircleShape2D_b0ikg")
+debug_color = Color(0, 1, 0, 0.419608)
+
+[node name="Feet" type="RayCast2D" parent="."]
+position = Vector2(0, 12)
+target_position = Vector2(-17, 0)
+collision_mask = 8
 
 [connection signal="timeout" from="Timer2" to="." method="_on_timer_2_timeout"]

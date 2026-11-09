@@ -3,6 +3,7 @@ extends Area2D
 @onready var animated_sprite = $AnimatedSprite2D
 @onready var hitbox = $Hitbox
 @onready var timer = $Timer
+@onready var col = $CollisionShape2D
 var spell_cast = false
 var damage = 1
 var offset = 50
@@ -24,10 +25,14 @@ func start_spell(player):
 		animated_sprite.flip_h = false
 		animated_sprite.offset.x = offset
 		hitbox.scale.x = 1
+		col.scale.x = 1
+		col.position.x = abs(col.position.x)
 	else:
 		animated_sprite.flip_h = true
 		animated_sprite.offset.x = -offset
 		hitbox.scale.x = -1
+		col.scale.x = -1
+		col.position.x = -abs(col.position.x)
 	position.y = player.position.y
 	position.x = player.position.x
 

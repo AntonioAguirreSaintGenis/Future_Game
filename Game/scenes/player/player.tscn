@@ -1,4 +1,4 @@
-[gd_scene load_steps=96 format=3 uid="uid://8imc11ynqept"]
+[gd_scene load_steps=98 format=3 uid="uid://8imc11ynqept"]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_jd723"]
 [ext_resource type="Texture2D" uid="uid://ctpn8lsohirrg" path="res://assets/sprites/player/player_sprite_sheet_copia.png" id="2_y0tak"]
@@ -718,8 +718,14 @@ height = 20.0
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_85jti"]
 size = Vector2(8, 20)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_72hko"]
-size = Vector2(13, 10)
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_d0wht"]
+b = Vector2(13, -14)
+
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_nrvoo"]
+b = Vector2(15, -16)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_spp8c"]
+size = Vector2(20, 15)
 
 [node name="Player" type="CharacterBody2D"]
 script = ExtResource("1_jd723")
@@ -729,14 +735,18 @@ jump_time_to_descend = 0.3
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
 sprite_frames = SubResource("SpriteFrames_groid")
-animation = &"magic"
+animation = &"attack"
 autoplay = "idle"
+frame = 9
+frame_progress = 1.0
 offset = Vector2(4, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+visible = false
 shape = SubResource("CapsuleShape2D_2tiym")
 
 [node name="Hurtbox_player" type="Area2D" parent="."]
+visible = false
 collision_layer = 2
 collision_mask = 0
 monitoring = false
@@ -751,8 +761,13 @@ collision_mask = 4
 monitorable = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
-position = Vector2(16.5, -5)
-shape = SubResource("RectangleShape2D_72hko")
+position = Vector2(13, 4)
+shape = SubResource("SegmentShape2D_d0wht")
+debug_color = Color(0, 0, 1, 0.419608)
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(10, 1)
+shape = SubResource("SegmentShape2D_nrvoo")
 debug_color = Color(0, 0, 1, 0.419608)
 
 [node name="Timer2" type="Timer" parent="."]
@@ -760,6 +775,14 @@ debug_color = Color(0, 0, 1, 0.419608)
 [node name="Timer" type="Timer" parent="."]
 
 [node name="TimerMagic" type="Timer" parent="."]
+
+[node name="EnemyBumper" type="Area2D" parent="."]
+visible = false
+collision_layer = 0
+collision_mask = 4
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="EnemyBumper"]
+shape = SubResource("RectangleShape2D_spp8c")
 
 [connection signal="animation_finished" from="AnimatedSprite2D" to="." method="_on_animated_sprite_2d_animation_finished"]
 [connection signal="timeout" from="Timer2" to="." method="_on_timer_2_timeout"]
