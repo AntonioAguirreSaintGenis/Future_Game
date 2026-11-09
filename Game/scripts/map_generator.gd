@@ -398,6 +398,7 @@ func create_room(x, y, zone, size, T):
 				for i in range(rng.randi_range(draw_obstacles, draw_obstacles + 2)):
 					draw_multiple_of_kind_obstacle(x, y)
 		#one_way_platform_symetrical_low(x, y, 0.25)
+	add_neighbor_border(cell)
 	set_cells_terrain_connect(0, pending, 0, 0)   # one terrain solve for the whole room
 	pending.clear()
 	
@@ -962,3 +963,15 @@ func force_single_room_start() -> Vector2i:
 	var start = rooms[rng.randi_range(0, rooms.size() - 1)]
 	map[start.y][start.x] = highest + 1
 	return start
+
+func add_neighbor_border(cell: Vector2i) -> void:
+	# Re-solve the ring of existing terrain tiles around this room so
+	# tiles from earlier rooms connect to the ones we're about to place.
+	var x0 = cell.x * room_size
+	var y0 = cell.y * room_size
+	for i in range(-1, room_size + 1):
+		for p in [Vector2i(x0 + i, y0 - 1), Vector2i(x0 + i, y0 + room_size),
+				Vector2i(x0 - 1, y0 + i), Vector2i(x0 + room_size, y0 + i)]:
+			var data = get_cell_tile_data(0, p)
+			if data != null and data.terrain_set == 0 and data.terrain == 0 and not pending.has(p):
+				pending.append(p)
